@@ -110,11 +110,6 @@ function _G.setMyData(data)
 	end
 end
 
---local myData = _G.getMyData()
---_G.tenfLib.jsonSave("hej.json", myData)
-local hej = _G.tenfLib.jsonLoad("hej.json", myData)
-_G.setMyData(hej)
-
 
 -- Moduler
 local storyboard         = require('storyboard')
