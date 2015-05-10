@@ -249,12 +249,9 @@ function scene:createScene( event )
 			}
 
 			local filterSuccessful = filtersFunction(data, filters, _G.getHidden(imdbID))
-			local searchSuccessful = false
-			if filterSuccessful then
-				searchSuccessful = searchFunction(data, _search)
-			end
+			local searchSuccessful = searchFunction(data, _search)
 
-			if filterSuccessful and searchSuccessful then
+			if (_search and searchSuccessful) or (filterSuccessful and searchSuccessful) then
 				scrollView:append(data.Title .. " ( ".. data.Year .." )", data, viewData)
 			end
 			

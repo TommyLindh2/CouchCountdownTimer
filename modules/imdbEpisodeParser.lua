@@ -79,6 +79,7 @@ function getSeasonData(imdbID, seasonNr, _onComplete)
 			local currentEpisode = nil
 			local currentValueToFind = nil
 			local nrOfBehindImg = nil
+			local hasPreEpisode = false
 
 			local parser = xmlReader:parser(
 			{
@@ -111,8 +112,10 @@ function getSeasonData(imdbID, seasonNr, _onComplete)
 				end,
 				text = function(text)
 					if nrOfBehindImg ~= nil then
-						if nrOfBehindImg > 1 then
-							print("test", text)
+						if nrOfBehindImg == 0 then
+							if text:find("Ep0") then
+								hasPreEpisode = true
+							end
 							nrOfBehindImg = nil
 						else
 							nrOfBehindImg = nrOfBehindImg + 1
@@ -128,10 +131,18 @@ function getSeasonData(imdbID, seasonNr, _onComplete)
 				end
 			})
 
+			
+
 			-- Ignore whitespace-only text nodes and strip leading/trailing whitespace from text
 			-- (does not strip leading/trailing whitespace from CDATA)
 			if pcall(function() parser:parse(resp, {stripWhitespace=true}) end) then
-				_onComplete(listOfEpisodes)
+				if hasPreEpisode then
+					for episodeIndex, episodeData in ipairs(listOfEpisodes) do
+						listOfEpisodes[episodeIndex].episodeNr = listOfEpisodes[episodeIndex].episodeNr - 1
+					end
+				end
+
+				_onComplete(listOfEpisodes, hasPreEpisode)
 			else
 				errorOccured()
 			end
@@ -149,7 +160,7 @@ return function(data, onComplete)
 
 	local function addNewSeason(seasonNr, seasonData)
 		listOfEverything.seasons[seasonNr] = seasonData
-		print("Lägger till säsong "..seasonNr.." med ".. #seasonData.episodes .. " episoder")
+		print("Lägger till säsong "..seasonNr.." med ".. #seasonData.episodes .. " episoder" .. (seasonData.hasPreEpisode and ", ett av avsnitten är Ep0" or ""))
 
 		local count = _G.tenfLib.tableCount(listOfEverything.seasons)
 
@@ -162,9 +173,9 @@ return function(data, onComplete)
 	getAmountOfSeasons(imdbID, function(listOfSeasons)
 		nrOfSeasons = #listOfSeasons
 		if nrOfSeasons > 0 then
-			for seasonNr, _ in ipairs(listOfSeasons) do
-				getSeasonData(imdbID, seasonNr, function(listOfEpisodes)
-					addNewSeason(seasonNr, {seasonNr = seasonNr, episodes = listOfEpisodes})
+			for seasonIndex, _ in ipairs(listOfSeasons) do
+				getSeasonData(imdbID, seasonIndex, function(listOfEpisodes, hasPreEpisode)
+					addNewSeason(seasonIndex, {seasonNr = seasonIndex, hasPreEpisode = hasPreEpisode, episodes = listOfEpisodes})
 				end)		
 			end
 		else

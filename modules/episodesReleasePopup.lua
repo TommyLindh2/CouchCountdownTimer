@@ -239,17 +239,18 @@ return function(parent, data)
 		local function checkBoxHandlerSeasons(e)
 			
 			local function handleStates(doWork, type)
+				local seasonIndex = e.index
 				local seasonNr = seriesData.seasons[e.index].seasonNr
 				if doWork then
 					if type == "add" then
-						_G.addSeenState(seriesInfo.imdbID, seasonNr)
+						_G.addSeenState(seriesInfo.imdbID, seasonIndex)
 					elseif type == "remove" then
-						_G.removeSeenState(seriesInfo.imdbID, seasonNr)
+						_G.removeSeenState(seriesInfo.imdbID, seasonIndex)
 					end
 					reloadTitles = true
 					loadSeasons()
 				else
-					local state, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonNr)
+					local state, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonIndex)
 					if state == "all" then
 						e.target:setChecked(true)
 					elseif state == "some" then
@@ -293,7 +294,9 @@ return function(parent, data)
 			if e.data.ignore then return end
 
 			local seasonNr = e.data.seasonNr
-			local currentSeason = seriesData.seasons[seasonNr]
+			local seasonIndex = e.index
+
+			local currentSeason = seriesData.seasons[seasonIndex]
 
 			scrollViewSeasons.isVisible = false
 
@@ -341,15 +344,15 @@ return function(parent, data)
 			local function checkBoxHandlerEpisodes(e)
 				reloadTitles = true
 				reloadSeasons = true
-				if e.checked then
-					local episodeNr = currentSeason.episodes[e.index].episodeNr
-					if episodeNr then
-						_G.addSeenState(seriesInfo.imdbID, seasonNr, episodeNr)
-					end
-				else
-					local episodeNr = currentSeason.episodes[e.index].episodeNr
-					if episodeNr then
-						_G.removeSeenState(seriesInfo.imdbID, seasonNr, episodeNr)
+
+				local episodeNr = currentSeason.episodes[e.index].episodeNr
+				local episodeIndex = e.index
+
+				if episodeIndex then
+					if e.checked then
+						_G.addSeenState(seriesInfo.imdbID, seasonIndex, episodeIndex)
+					else
+						_G.removeSeenState(seriesInfo.imdbID, seasonIndex, episodeIndex)
 					end
 				end
 				loadEpisodes()
@@ -359,9 +362,13 @@ return function(parent, data)
 				if e.data.ignore then return end
 
 				local text = ""
-				for k,v in pairs(e.data) do
-					text = text .. k .. ":\t" .. _G.tenfLib.shortenText(type(v) == "table" and _G.getDateString(v) or v, 200, "...") .. "\n"
-				end
+				--for k,v in pairs(e.data) do
+				--	text = text .. k .. ":\t" .. _G.tenfLib.shortenText(type(v) == "table" and _G.getDateString(v) or v, 200, "...") .. "\n"
+				--end
+				text = "Release:\t" .. _G.getDateString(e.data['airdate'])
+				text = text .. "\n" .. "Name:\t\t" .. e.data['name']
+				text = text .. "\n\n" .. "Desc:\t\t" .. _G.tenfLib.shortenText(e.data['description'], 200, "...")
+
 				native.showAlert("Info", text, {"Ok"}, function()
 					scrollViewEpisodes.tapped = false
 				end)
@@ -377,8 +384,9 @@ return function(parent, data)
 				end
 
 				if #currentSeason.episodes > 0 then
-					for episodeNr, episodeData in ipairs(currentSeason.episodes) do
-						local seen, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonNr, episodeNr)
+					for episodeIndex, episodeData in ipairs(currentSeason.episodes) do
+						local episodeNr = episodeData.episodeNr
+						local seen, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonIndex, episodeIndex)
 						local viewData = 
 						{
 							seen = seen,
@@ -410,8 +418,9 @@ return function(parent, data)
 			end
 
 			if #seriesData.seasons > 0 then
-				for seasonNr, seasonData in ipairs(seriesData.seasons) do
-					local seen, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonNr)
+				for seasonIndex, seasonData in ipairs(seriesData.seasons) do
+					local seasonNr = seasonData.seasonNr
+					local seen, seenCount = _G.loadSeenState(seriesInfo.imdbID, seasonIndex)
 					local viewData = 
 					{
 						showProgress = true,

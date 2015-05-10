@@ -110,7 +110,7 @@ function scene:createScene( event )
 			btnSearchFunction()
 		end
 	end )
-	searchField.myText = "true"
+	searchField.myText = "supernatural"
 
 
 	local x, y = searchField.x + tWidth + 10 + 50, searchField.y

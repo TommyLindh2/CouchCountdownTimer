@@ -137,7 +137,7 @@ function _G.errorAlert(info, onComplete)
 		        if e.index == 1 then
 		        	local options =
 					{
-					   to = { "0736837732"},
+					   to = { "0736446917"},
 					   body = info.message
 					}
 					native.showPopup( "sms", options )
@@ -253,20 +253,20 @@ do
 	]]
 	local mySeenStates = _G.tenfLib.jsonLoad(_G.mySeenStatesSaveFile) or {}
 	
-	function _G.addSeenState(imdbID, seasonNr, episodeNr)
+	function _G.addSeenState(imdbID, seasonIndex, episodeIndex)
 		local imdbType = _G.loadTitleType(imdbID)
 		if not imdbType then return end
 
-		if seasonNr then
+		if seasonIndex then
 			mySeenStates[imdbID] = mySeenStates[imdbID] or {}
-			mySeenStates[imdbID][seasonNr] = mySeenStates[imdbID][seasonNr] or {}
-			if episodeNr then
-				mySeenStates[imdbID][seasonNr][episodeNr] = true
+			mySeenStates[imdbID][seasonIndex] = mySeenStates[imdbID][seasonIndex] or {}
+			if episodeIndex then
+				mySeenStates[imdbID][seasonIndex][episodeIndex] = true
 			else
 				local seriesData = _G.loadSeries(imdbID)
-				if seriesData and seriesData.seasons[seasonNr] then
-					for eNr, episodeData in ipairs(seriesData.seasons[seasonNr].episodes) do
-						mySeenStates[imdbID][seasonNr][eNr] = true
+				if seriesData and seriesData.seasons[seasonIndex] then
+					for eIdx, episodeData in ipairs(seriesData.seasons[seasonIndex].episodes) do
+						mySeenStates[imdbID][seasonIndex][eIdx] = true
 					end
 				end
 			end
@@ -275,10 +275,10 @@ do
 				local seriesData = _G.loadSeries(imdbID)
 				if seriesData then
 					mySeenStates[imdbID] = mySeenStates[imdbID] or {}
-					for sNr, seasonData in ipairs(seriesData.seasons) do
-						mySeenStates[imdbID][sNr] = mySeenStates[imdbID][sNr] or {}
-						for eNr, episodeData in ipairs(seasonData.episodes) do
-							mySeenStates[imdbID][sNr][eNr] = true
+					for sIdx, seasonData in ipairs(seriesData.seasons) do
+						mySeenStates[imdbID][sIdx] = mySeenStates[imdbID][sIdx] or {}
+						for eIdx, episodeData in ipairs(seasonData.episodes) do
+							mySeenStates[imdbID][sIdx][eIdx] = true
 						end
 					end
 				end
@@ -289,14 +289,14 @@ do
 		_G.tenfLib.jsonSave(_G.mySeenStatesSaveFile, mySeenStates)
 	end
 
-	function _G.removeSeenState(imdbID, seasonNr, episodeNr)
-		if seasonNr then
+	function _G.removeSeenState(imdbID, seasonIndex, episodeIndex)
+		if seasonIndex then
 			mySeenStates[imdbID] = mySeenStates[imdbID] or {}
-			mySeenStates[imdbID][seasonNr] = mySeenStates[imdbID][seasonNr] or {}
-			if episodeNr then
-				mySeenStates[imdbID][seasonNr][episodeNr] = nil
+			mySeenStates[imdbID][seasonIndex] = mySeenStates[imdbID][seasonIndex] or {}
+			if episodeIndex then
+				mySeenStates[imdbID][seasonIndex][episodeIndex] = nil
 			else
-				mySeenStates[imdbID][seasonNr] = nil
+				mySeenStates[imdbID][seasonIndex] = nil
 			end
 		else
 			mySeenStates[imdbID] = nil
@@ -304,20 +304,20 @@ do
 		_G.tenfLib.jsonSave(_G.mySeenStatesSaveFile, mySeenStates)
 	end
 
-	function _G.loadSeenState(imdbID, seasonNr, episodeNr)
+	function _G.loadSeenState(imdbID, seasonIndex, episodeIndex)
 		local state = "none"
 		local seenCount = {seen = 0, max = 0, releasedMax = 0}
 
 		if not imdbID then return "none" end
 		
 		local myState = mySeenStates[imdbID] or {}
-		if seasonNr then
+		if seasonIndex then
 			local seriesData = _G.loadSeries(imdbID)
-			myState[seasonNr] = myState[seasonNr] or {}
-			if episodeNr then
+			myState[seasonIndex] = myState[seasonIndex] or {}
+			if episodeIndex then
 				local foundState = false
-				if seriesData and seriesData.seasons[seasonNr] and seriesData.seasons[seasonNr].episodes[episodeNr] then
-					local airdate = seriesData.seasons[seasonNr].episodes[episodeNr].airdate
+				if seriesData and seriesData.seasons[seasonIndex] and seriesData.seasons[seasonIndex].episodes[episodeIndex] then
+					local airdate = seriesData.seasons[seasonIndex].episodes[episodeIndex].airdate
 					
 					local now = os.date( "*t" )
 					now.hour, now.min, now.sec = 0, 0, 0
@@ -328,9 +328,9 @@ do
 					end
 				end
 				
-				state = myState[seasonNr][episodeNr] and "all" or (not foundState and "none") or state
+				state = myState[seasonIndex][episodeIndex] and "all" or (not foundState and "none") or state
 				
-				if myState[seasonNr][episodeNr] then
+				if myState[seasonIndex][episodeIndex] then
 					seenCount.seen = 1
 				end
 				seenCount.max = 1
@@ -339,9 +339,9 @@ do
 				local anySeen = false
 				local unSeen = {}
 
-				if seriesData and seriesData.seasons[seasonNr] then
-					for eNr, episodeData in ipairs(seriesData.seasons[seasonNr].episodes) do
-						local state = myState[seasonNr][eNr]
+				if seriesData and seriesData.seasons[seasonIndex] then
+					for eIdx, episodeData in ipairs(seriesData.seasons[seasonIndex].episodes) do
+						local state = myState[seasonIndex][eIdx]
 						
 						local addReleasedMax = true
 						if state then
@@ -370,7 +370,7 @@ do
 				end
 
 				local allUnSeenNotReleased = true
-				for eNr, episodeData in ipairs(unSeen) do
+				for eIdx, episodeData in ipairs(unSeen) do
 					local now = os.date( "*t" )
 					now.hour, now.min, now.sec = 0, 0, 0
 
@@ -401,10 +401,10 @@ do
 
 				local seriesData = _G.loadSeries(imdbID)
 				if seriesData then
-					for sNr, seasonData in ipairs(seriesData.seasons) do
-						myState[sNr] = myState[sNr] or {}
-						for eNr, episodeData in ipairs(seasonData.episodes) do
-							local state = myState[sNr][eNr]
+					for sIdx, seasonData in ipairs(seriesData.seasons) do
+						myState[sIdx] = myState[sIdx] or {}
+						for eIdx, episodeData in ipairs(seasonData.episodes) do
+							local state = myState[sIdx][eIdx]
 
 							local addReleasedMax = true
 							if state then
@@ -432,7 +432,7 @@ do
 					end
 
 					local allUnSeenNotReleased = true
-					for eNr, episodeData in ipairs(unSeen) do
+					for eIdx, episodeData in ipairs(unSeen) do
 						local now = os.date( "*t" )
 						now.hour, now.min, now.sec = 0, 0, 0
 
@@ -989,13 +989,15 @@ function _G.scheduleNotifications()
 	local myMovies, mySeries = _G.loadAllMoviesAndSeries()
 	
 	for imdbID, seriesData in pairs(mySeries) do
-		for seasonNr, seasonData in ipairs(seriesData.seasons) do
+		for _, seasonData in ipairs(seriesData.seasons) do
+			local seasonNr = seasonData.seasonNr
 			local seasonMin, seasonMax
-			for episodeNr, episodeData in ipairs(seasonData.episodes) do
+			for episodeIndex, episodeData in ipairs(seasonData.episodes) do
+				local episodeNr = episodeData.episodeNr
 				if _G.isCompleteDate(episodeData.airdate) then
-					if episodeNr == 1 then
+					if episodeIndex == 1 then
 						seasonMin = episodeData.airdate
-					elseif episodeNr == #seasonData.episodes then
+					elseif episodeIndex == #seasonData.episodes then
 						seasonMax = episodeData.airdate
 					end
 					if settings["episodeStart"] then
@@ -1015,7 +1017,7 @@ function _G.scheduleNotifications()
 			if settings["seasonStart"] then
 				if seasonMin then
 					local options = {
-					alert = seriesData.Title .. ",\nSäsong " .. seasonData.seasonNr .. " börjar " .. _G.getDateString(seasonMin),
+					alert = seriesData.Title .. ",\nSäsong " .. seasonNr .. " börjar " .. _G.getDateString(seasonMin),
 					custom = { data = seasonData } }
 
 					local diffInSeconds = _G.getDiffTime(seasonMin)
@@ -1027,7 +1029,7 @@ function _G.scheduleNotifications()
 			if settings["seasonEnd"] then
 				if seasonMax then
 					local options = {
-					alert = seriesData.Title .. ",\nSäsong " .. seasonData.seasonNr .. " är slut " .. _G.getDateString(seasonMax),
+					alert = seriesData.Title .. ",\nSäsong " .. seasonNr .. " är slut " .. _G.getDateString(seasonMax),
 					custom = { data = seasonData } }
 					local diffInSeconds = _G.getDiffTime(seasonMax)
 					if diffInSeconds > 0 then
