@@ -1,0 +1,42 @@
+settings = {
+
+	orientation = {
+		default = 'portrait',
+		supported = { 'portrait' },
+	},
+
+	iphone = {
+		plist = {
+			CFBundleIconFile = 'Icon.png',
+			CFBundleIconFiles = {
+				'Icon.png',
+				'Icon@2x.png',
+				'Icon-40.png',
+				'Icon-40@2x.png',
+				'Icon-60.png',
+				'Icon-60@2x.png',
+				'Icon-72.png',
+				'Icon-72@2x.png',
+				'Icon-76.png',
+				'Icon-76@2x.png',
+				'Icon-Small-50.png',
+				'Icon-Small-50@2x.png',
+				'Icon-Small.png',
+				'Icon-Small@2x.png',
+			},
+			UIApplicationExitsOnSuspend = true,
+		},
+	},
+
+	android = {
+		largeHeap = true,
+		usesPermissions = {
+			'android.permission.INTERNET',
+			'android.permission.RECEIVE_BOOT_COMPLETED',
+			'android.permission.STATUS_BAR',
+			'android.permission.WRITE_EXTERNAL_STORAGE',
+		},
+		versionCode = '10' -- This means version 1.0 and 11 is 1.1 and so on
+	},
+
+}
