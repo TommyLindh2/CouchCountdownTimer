@@ -91,6 +91,25 @@ _G.buttonColor = {normal = {154 / 255, 53 / 255, 255 / 255}, over = {101 / 255, 
 --= Lokala variabler ====================================================================
 --=======================================================================================
 --=======================================================================================
+local function doOnAll(obj, func)
+	local function doOnAll(obj2, parent, key)
+		if type(obj2) == 'table' then
+			for i, v in pairs(obj2) do
+				doOnAll(v, obj2, i)
+			end
+		else
+			if parent and key then
+				parent[key] = func(tostring(obj2))
+			end
+		end
+	end
+	if type(obj) == "table" then
+		doOnAll(obj)
+		return obj
+	else
+		return func(tostring(obj))
+	end
+end
 
 function _G.getMyData()
 	local data = {}
@@ -99,7 +118,10 @@ function _G.getMyData()
 		local loadedData = _G.tenfLib.jsonLoad(dataToGet.file)
 		data[name] = loadedData
 	end
-	return data
+
+	local url = require("socket.url")
+
+	return url.escape(require('json').encode(data))
 end
 
 function _G.setMyData(data)
@@ -109,7 +131,18 @@ function _G.setMyData(data)
 		end
 	end
 end
+--[[
+local hej = require("modules.saveManager")()
+hej:loadData(function(e)
+	print(e.success)
+	print(e.data)
+	print(require('json').decode(e.data))
 
+end)
+hej:saveData(_G.getMyData(), function(e)
+	print(e.success)
+end)
+--]]
 
 -- Moduler
 local storyboard         = require('storyboard')

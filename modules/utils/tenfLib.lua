@@ -2549,6 +2549,7 @@ end
 
 
 
+
 -- Lägger objekten i en array i slumpmässig ordning (Notera att originalarrayen ändras)
 -- Ett intervall kan anges
 -- Funktionen kan även blanda runt bokstäver i en utf8-sträng
