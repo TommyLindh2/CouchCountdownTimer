@@ -33,6 +33,16 @@ _G.myHiddenSaveFile  		= "myHiddens" .. fileExtension
 _G.myLastDownloadSaveFile	= "myLastDownload" .. fileExtension
 
 
+_G.dataToSendReceive = 
+{
+	["titles"] = { file = _G.myTitlesSaveFile },
+	["series"] = { file = _G.mySeriesSaveFile },
+	["movies"] = { file = _G.myMoviesSaveFile },
+	["seenStates"] = { file = _G.mySeenStatesSaveFile },
+	["settings"] = { file = _G.mySettingsSaveFile },
+	["filters"] = { file = _G.myFiltersSaveFile },
+	["hidden"] = { file = _G.myHiddenSaveFile }
+}
 
 
 -- Moduler
@@ -81,6 +91,29 @@ _G.buttonColor = {normal = {154 / 255, 53 / 255, 255 / 255}, over = {101 / 255, 
 --= Lokala variabler ====================================================================
 --=======================================================================================
 --=======================================================================================
+
+function _G.getMyData()
+	local data = {}
+
+	for name, dataToGet in pairs(_G.dataToSendReceive or {}) do
+		local loadedData = _G.tenfLib.jsonLoad(dataToGet.file)
+		data[name] = loadedData
+	end
+	return data
+end
+
+function _G.setMyData(data)
+	for key, dataToSet in pairs(data or {}) do
+		if _G.dataToSendReceive[key] then
+			_G.tenfLib.jsonSave(_G.dataToSendReceive[key].file, dataToSet)
+		end
+	end
+end
+
+--local myData = _G.getMyData()
+--_G.tenfLib.jsonSave("hej.json", myData)
+local hej = _G.tenfLib.jsonLoad("hej.json", myData)
+_G.setMyData(hej)
 
 
 -- Moduler
@@ -1103,6 +1136,8 @@ do
 		end
 	end
 end
+
+
 
 
 --=======================================================================================
