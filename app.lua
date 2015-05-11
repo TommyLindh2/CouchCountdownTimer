@@ -153,14 +153,14 @@ function _G.getMyData()
 		data[name] = loadedData
 	end
 
-	local jsonBlob = require('json').encode(data)
+	local jsonBlob = _G.json.encode(data)
 	return _G.base64.encode(jsonBlob)
 end
 
 function _G.setMyData(data)
 
 	local jsonBlob = _G.base64.decode(data)
-	local tableData = require('json').decode(jsonBlob)
+	local tableData = _G.json.decode(jsonBlob)
 
 	if type(tableData) == 'table' then
 		for key, dataToSet in pairs(tableData or {}) do

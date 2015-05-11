@@ -335,7 +335,7 @@ function scene:createScene( event )
 		{title = "Spara data på server", onClick = function(e)
 			saveManager:saveData(_G.getMyData(), function(e)
 				if e.success then
-					native.showAlert("Yaay!", "Data sparad på server", {"Ok"}, function(e)
+					native.showAlert("Yaay!", e.message, {"Ok"}, function(e)
 						-- void
 					end)
 				else
@@ -348,7 +348,7 @@ function scene:createScene( event )
 		{title = "Ladda data från server", onClick = function(e)
 			saveManager:loadData(function(e)
 				if e.success then
-					if not (_G.tenfLib.trim(e.data) == "") then
+					if not (_G.tenfLib.trim(e.data or "") == "") then
 						local result = _G.setMyData(e.data)
 						if result then
 							native.showAlert("Yaay!", "Data hämtad från server", {"Ok"}, function(e)
@@ -366,7 +366,7 @@ function scene:createScene( event )
 						end)
 					end
 				else
-					native.showAlert("Varning!", e.message, {"Ok"}, function(e)
+					native.showAlert("Varning!", e.message or "<what?>", {"Ok"}, function(e)
 						-- void
 					end)
 				end
