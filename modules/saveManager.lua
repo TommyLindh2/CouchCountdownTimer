@@ -5,8 +5,8 @@ return function(_username, _password)
 		username = _username
 		password = _password
 	end
-	local url = "http://192.168.0.16/CouchTimer"
-	--local url = "http://85.226.14.142/CouchTimer"
+	--local url = "http://192.168.0.16/CouchTimer"
+	local url = "http://85.226.14.142/CouchTimer"
 	local secret = "mattiasegna"
 
 	local function md5Hash(content)
@@ -77,7 +77,7 @@ return function(_username, _password)
 					local userid = parsedLoginResponse.data
 
 					-- Save data
-					local key = md5Hash(userid .. _data .. secret)
+					local key = md5Hash(userid .. secret)
 					local params = {
 						body = "user=" .. userid .. "&key=" .. key .. "&data=" .. _data
 					}
