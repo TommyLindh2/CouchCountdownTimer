@@ -44,7 +44,6 @@ _G.dataToSendReceive =
 	["hidden"] = { file = _G.myHiddenSaveFile }
 }
 
-
 -- Moduler
 _G.orientation             = require('modules.utils.orientation')
 _G.tenfLib                 = require('modules.utils.tenfLib')
@@ -91,6 +90,7 @@ _G.buttonColor = {normal = {154 / 255, 53 / 255, 255 / 255}, over = {101 / 255, 
 --= Lokala variabler ====================================================================
 --=======================================================================================
 --=======================================================================================
+--[[
 local function doOnAll(obj, func)
 	local function doOnAll(obj2, parent, key)
 		if type(obj2) == 'table' then
@@ -110,6 +110,40 @@ local function doOnAll(obj, func)
 		return func(tostring(obj))
 	end
 end
+--]]
+do
+	local mime = require("mime")
+	_G.base64 = {}
+	function _G.base64.encode(data)
+		local len = data:len()
+		local t = {}
+		for i=1,len,384 do
+			local n = math.min(384, len+1-i)
+			if n > 0 then
+				local s = data:sub(i, i+n-1)
+				local enc, _ = mime.b64(s)
+				t[#t+1] = enc
+			end
+		end
+
+		return table.concat(t)
+	end
+
+	function _G.base64.decode(data)
+		local len = data:len()
+		local t = {}
+		for i=1,len,384 do
+			local n = math.min(384, len+1-i)
+			if n > 0 then
+				local s = data:sub(i, i+n-1)
+				local dec, _ = mime.unb64(s)
+				t[#t+1] = dec
+			end
+		end
+		return table.concat(t)
+	end
+
+end
 
 function _G.getMyData()
 	local data = {}
@@ -119,30 +153,36 @@ function _G.getMyData()
 		data[name] = loadedData
 	end
 
-	local url = require("socket.url")
-
-	return url.escape(require('json').encode(data))
+	local jsonBlob = require('json').encode(data)
+	return _G.base64.encode(jsonBlob)
 end
 
 function _G.setMyData(data)
-	for key, dataToSet in pairs(data or {}) do
-		if _G.dataToSendReceive[key] then
-			_G.tenfLib.jsonSave(_G.dataToSendReceive[key].file, dataToSet)
+
+	local jsonBlob = _G.base64.decode(data)
+	local tableData = require('json').decode(jsonBlob)
+
+	if type(tableData) == 'table' then
+		for key, dataToSet in pairs(tableData or {}) do
+			if _G.dataToSendReceive[key] then
+				_G.tenfLib.jsonSave(_G.dataToSendReceive[key].file, dataToSet)
+			end
 		end
+		return true
+	else
+		return false
 	end
 end
---[[
-local hej = require("modules.saveManager")()
-hej:loadData(function(e)
-	print(e.success)
-	print(e.data)
-	print(require('json').decode(e.data))
 
-end)
-hej:saveData(_G.getMyData(), function(e)
-	print(e.success)
-end)
---]]
+function _G.reloadMyData()
+	_G.reloadMyHiddens()
+	_G.reloadMyFilters()
+	_G.reloadMySettings()
+	_G.reloadMySeenStates()
+	_G.reloadMySeries()
+	_G.reloadMyMovies()
+	_G.reloadMyTitles()
+end
 
 -- Moduler
 local storyboard         = require('storyboard')
@@ -220,6 +260,12 @@ end
 do
 	local myHiddens = _G.tenfLib.jsonLoad(_G.myHiddenSaveFile) or {}
 
+	function _G.reloadMyHiddens()
+		myHiddens = _G.tenfLib.jsonLoad(_G.myHiddenSaveFile) or {}
+	end
+
+	if _G.dataToSendReceive["hidden"] then _G.dataToSendReceive["hidden"].dataTable = myHiddens end
+
 	function _G.getHidden(imdbID)
 		return not not myHiddens[imdbID]
 	end
@@ -253,7 +299,13 @@ do
 end
 
 do
-	local myFilters = _G.tenfLib.jsonLoad(_G.myFiltersSaveFile) or {}
+	local myFilters
+
+	function _G.reloadMyFilters()
+		myFilters = _G.tenfLib.jsonLoad(_G.myFiltersSaveFile) or {}
+	end
+	_G.reloadMyFilters()
+
 	local availableFilters =
 	{
 		{id = "hideSeries", displayName = "Göm serier"},
@@ -282,7 +334,12 @@ do
 end
 
 do
-	local mySettings = _G.tenfLib.jsonLoad(_G.mySettingsSaveFile) or {}
+	local mySettings
+
+	function _G.reloadMySettings()
+		mySettings = _G.tenfLib.jsonLoad(_G.mySettingsSaveFile) or {}
+	end
+	_G.reloadMySettings()
 
 	--[[
 		settingsTable:
@@ -312,7 +369,12 @@ do
 		* all
 		* allReleased
 	]]
-	local mySeenStates = _G.tenfLib.jsonLoad(_G.mySeenStatesSaveFile) or {}
+	local mySeenStates
+
+	function _G.reloadMySeenStates()
+		mySeenStates = _G.tenfLib.jsonLoad(_G.mySeenStatesSaveFile) or {}
+	end
+	_G.reloadMySeenStates()
 	
 	function _G.addSeenState(imdbID, seasonIndex, episodeIndex)
 		local imdbType = _G.loadTitleType(imdbID)
@@ -561,7 +623,13 @@ function _G.loadAllMoviesAndSeries()
 end
 
 do
-	local mySeries = _G.tenfLib.jsonLoad(_G.mySeriesSaveFile) or {}
+	local mySeries
+
+	function _G.reloadMySeries()
+		mySeries = _G.tenfLib.jsonLoad(_G.mySeriesSaveFile) or {}
+	end
+	_G.reloadMySeries()
+
 	function _G.addSeries(data)
 		local seriesExists = _G.seriesExists(data.imdbID)
 		mySeries[data.imdbID] = _G.tenfLib.tableCopy(data, true)
@@ -585,7 +653,13 @@ do
 end
 
 do
-	local myMovies = _G.tenfLib.jsonLoad(_G.myMoviesSaveFile) or {}
+	local myMovies
+
+	function _G.reloadMyMovies()
+		myMovies = _G.tenfLib.jsonLoad(_G.myMoviesSaveFile) or {}
+	end
+	_G.reloadMyMovies()
+
 	function _G.addMovie(data)
 		local movieExists = _G.movieExists(data.imdbID)
 		myMovies[data.imdbID] = _G.tenfLib.tableCopy(data, true)
@@ -718,7 +792,13 @@ function _G.downloadTitle(imdbID, directoryForImage, onComplete)
 end
 
 do
-	local myTitles = _G.tenfLib.jsonLoad(_G.myTitlesSaveFile) or {}
+	local myTitles
+
+	function _G.reloadMyTitles()
+		myTitles = _G.tenfLib.jsonLoad(_G.myTitlesSaveFile) or {}
+	end
+	_G.reloadMyTitles()
+
 	function _G.addTitle(data)
 		local titleExist = _G.titleExists(data.imdbID)
 		myTitles[data.imdbID] = _G.tenfLib.tableCopy(data, true)
@@ -1147,8 +1227,10 @@ do
 			local textObj = text and display.newText(options) or nil
 			if textObj then textObj:setFillColor(0.3) end
 			indicator = _G.newGroup()
-			indicator:insert(textObj)
-			indicator.txtObj = textObj
+			if textObj then
+				indicator:insert(textObj)
+				indicator.txtObj = textObj
+			end
 
 			transition.from(bg, {time=100, alpha=0, transition=easing.inOutQuad})
 			transition.from(indicator, {time=100, alpha=0, transition=easing.inOutQuad})
