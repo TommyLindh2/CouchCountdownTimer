@@ -36,12 +36,12 @@ _G.myLastDownloadSaveFile	= "myLastDownload" .. fileExtension
 _G.dataToSendReceive = 
 {
 	["titles"] = { file = _G.myTitlesSaveFile },
-	["series"] = { file = _G.mySeriesSaveFile },
-	["movies"] = { file = _G.myMoviesSaveFile },
+	["series"] = { remove = true, file = _G.mySeriesSaveFile },
+	["movies"] = { remove = true, file = _G.myMoviesSaveFile },
 	["seenStates"] = { file = _G.mySeenStatesSaveFile },
 	["settings"] = { file = _G.mySettingsSaveFile },
 	["filters"] = { file = _G.myFiltersSaveFile },
-	["hidden"] = { file = _G.myHiddenSaveFile }
+	--["hidden"] = { file = _G.myHiddenSaveFile }
 }
 
 -- Moduler
@@ -150,7 +150,19 @@ function _G.getMyData()
 
 	for name, dataToGet in pairs(_G.dataToSendReceive or {}) do
 		local loadedData = _G.tenfLib.jsonLoad(dataToGet.file)
-		data[name] = loadedData
+		local dataToSend
+		if name == "titles" then
+			dataToSend = {}
+			for imdbID, titleData in pairs(loadedData) do
+				dataToSend[imdbID] = {
+					Type = titleData.Type,
+					imdbID = imdbID
+				}
+			end
+		elseif not dataToGet.remove then
+			dataToSend = loadedData
+		end
+		data[name] = dataToSend
 	end
 
 	local jsonBlob = _G.json.encode(data)
@@ -163,6 +175,13 @@ function _G.setMyData(data)
 	local tableData = _G.json.decode(jsonBlob)
 
 	if type(tableData) == 'table' then
+		for k,v in pairs(_G.dataToSendReceive) do
+			if v.remove then
+				
+				print( "Remove: ", os.remove( system.pathForFile( v.file, system.DocumentsDirectory ) ) )
+			end
+		end
+
 		for key, dataToSet in pairs(tableData or {}) do
 			if _G.dataToSendReceive[key] then
 				_G.tenfLib.jsonSave(_G.dataToSendReceive[key].file, dataToSet)
@@ -249,7 +268,7 @@ function _G.errorAlert(info, onComplete)
 		    end
 		end)
 	else
-		native.showAlert("Error!", info.messageToUser or "Något gick fel!", {"Ok"}, function(e)
+		native.showAlert("Error!", "Något gick fel!", {"Ok"}, function(e)
 			if e.action == "clicked" then
 				if onComplete then onComplete() end
 			end
@@ -686,6 +705,10 @@ function _G.downloadTitles(titleList, progressFunction)
 	local nrOfTitles = _G.tenfLib.tableCount(titleList)
 	local downloadCounter = 0
 
+	if progressFunction then
+		progressFunction({counter = 0, total = nrOfTitles})
+	end
+
 	local function CheckDownloadCompletion()
 		downloadCounter = downloadCounter + 1
 
@@ -702,19 +725,27 @@ function _G.downloadTitles(titleList, progressFunction)
 		local isSeries = data.Type == "series"
 		local currentData = data
 		if isSeries then
-			require("modules.imdbEpisodeParser")(currentData, function(e)
-				if e.isError then
+			_G.downloadTitle(currentData.imdbID, system.DocumentsDirectory, function(eTitle)
+				if eTitle.isError then
 					print("Network error")
-					-- void
+					CheckDownloadCompletion()
 				else
-					local seriesData = e.data
-					_G.addSeries(seriesData)
-					_G.addTitle(seriesData)
+					display.remove(eTitle.posterImage)
+					_G.addTitle(eTitle.data)				
+					require("modules.imdbEpisodeParser")(currentData, function(eSeries)
+						if eSeries.isError then
+							print("Network error")
+							-- void
+						else
+							local seriesData = eSeries.data
+							_G.addSeries(seriesData)
+						end
+						CheckDownloadCompletion()
+					end)
 				end
-				CheckDownloadCompletion()
 			end)
 		else
-			_G.downloadTitle(data.imdbID, system.DocumentsDirectory, function(e)
+			_G.downloadTitle(currentData.imdbID, system.DocumentsDirectory, function(e)
 				if e.isError then
 					print("Network error")
 					-- void

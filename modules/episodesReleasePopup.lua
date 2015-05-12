@@ -21,7 +21,8 @@ return function(parent, data)
 	local group = _G.newGroup(parent)
 	group.x, group.y = _G._w, _G._h
 
-	native.setActivityIndicator(true, "Hämtar episodinformation om:\n\"" .. seriesInfo.Title .."\"")
+	local indicatorText = "Hämtar episodinformation" .. (seriesInfo.Title and "om:\n\"" .. seriesInfo.Title .."\"" or ".")
+	native.setActivityIndicator(true, indicatorText)
 
 	if _G.seriesExists(seriesInfo.imdbID) then
 		timer.performWithDelay(0, function()

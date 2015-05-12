@@ -254,7 +254,11 @@ function scene:createScene( event )
 			local searchSuccessful = searchFunction(data, _search)
 
 			if (_search and searchSuccessful) or (filterSuccessful and searchSuccessful) then
-				scrollView:append(data.Title .. " ( ".. data.Year .." )", data, viewData)
+				if data.Title then
+					scrollView:append(data.Title .. " ( ".. data.Year .." )", data, viewData)
+				else
+					scrollView:append("Click to download data", data, viewData)
+				end
 			end
 			
 		end
@@ -333,42 +337,66 @@ function scene:createScene( event )
 		{title = "Med bild", onClick = function(e) setView("photo") end},
 		--{title = "Server:", type = 'separator'},
 		{title = "Spara data på server", onClick = function(e)
-			saveManager:saveData(_G.getMyData(), function(e)
-				if e.success then
-					native.showAlert("Yaay!", e.message, {"Ok"}, function(e)
+			native.showAlert("Varning!", "Är du säker på att du vill ladda upp data till servern?", {"Ja", "Nej"}, function(e)
+				if e.action == "clicked" then
+					if e.index == 1 then -- "Ja"
+						saveManager:saveData(_G.getMyData(), function(e)
+							if e.success then
+								native.showAlert("Yaay!", e.message, {"Ok"}, function(e)
+									-- void
+								end)
+							else
+								native.showAlert("Varning!", e.message, {"Ok"}, function(e)
+									-- void
+								end)
+							end
+						end)
+					else
 						-- void
-					end)
-				else
-					native.showAlert("Varning!", e.message, {"Ok"}, function(e)
-						-- void
-					end)
+					end
 				end
 			end)
 		end},
 		{title = "Ladda data från server", onClick = function(e)
-			saveManager:loadData(function(e)
-				if e.success then
-					if not (_G.tenfLib.trim(e.data or "") == "") then
-						local result = _G.setMyData(e.data)
-						if result then
-							native.showAlert("Yaay!", "Data hämtad från server", {"Ok"}, function(e)
-								_G.reloadMyData()
-								reloadTitles(lastSearch)
-							end)
-						else
-							native.showAlert("Varning!", "Hämtad data är korrupt.\n\nSätt dig ett tag och gråt, för detta är inte bra... :(", {"Ok"}, function(e)
-								-- void
-							end)
-						end
-					else
-						native.showAlert("Varning!", "Hittar ingen data med din användare.", {"Ok"}, function(e)
-							-- void
+			native.showAlert("Varning!", "Är du säker på att du vill ladda ner data från server?\n\nDin tidigare data kommer att försvinna!", {"Ja", "Nej"}, function(e)
+				if e.action == "clicked" then
+					if e.index == 1 then -- "Ja"
+						saveManager:loadData(function(e)
+							if e.success then
+								if not (_G.tenfLib.trim(e.data or "") == "") then
+									local result = _G.setMyData(e.data)
+									if result then
+										native.showAlert("Yaay!", "Data hämtad från server, Vill du ladda ner all information om serierna/filmerna?", {"Ja", "Nej"}, function(e)
+											if e.action == "clicked" then
+												_G.reloadMyData()
+												if e.index == 1 then -- "Ja"
+													updateAllTitles(function()
+														reloadTitles(lastSearch)
+													end)
+												else
+													reloadTitles(lastSearch)
+												end
+											end
+										end)
+									else
+										native.showAlert("Varning!", "Hämtad data är korrupt.\n\nSätt dig ett tag och gråt, för detta är inte bra... :(", {"Ok"}, function(e)
+											-- void
+										end)
+									end
+								else
+									native.showAlert("Varning!", "Hittar ingen data med din användare.", {"Ok"}, function(e)
+										-- void
+									end)
+								end
+							else
+								native.showAlert("Varning!", e.message or "<what?>", {"Ok"}, function(e)
+									-- void
+								end)
+							end
 						end)
-					end
-				else
-					native.showAlert("Varning!", e.message or "<what?>", {"Ok"}, function(e)
+					else
 						-- void
-					end)
+					end
 				end
 			end)
 		end}
