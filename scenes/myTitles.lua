@@ -31,8 +31,8 @@ local lastSearch
 local reloadTitles
 local searchFunction, filtersFunction
 local updateAllTitles
+local sideMenu
 
-local saveManager = require("modules.saveManager")('tompa', 'hemligt123')
 
 function updateAllTitles(_onComplete)
 	_G.downloadTitles(_G.loadTitles(), function(args)
@@ -329,98 +329,125 @@ function scene:createScene( event )
 
 	local typeOfView = _G.getSettings().typeOfView
 	scrollView:setTypeOfView(typeOfView)
-
-	local buttons =
-	{
-		{title = "Uppdatera data från IMDB", onClick = downloadAllTitles},
-		{title = "Utan bild", onClick = function(e) setView("normal") end},
-		{title = "Med bild", onClick = function(e) setView("photo") end},
-		--{title = "Server:", type = 'separator'},
-		{title = "Spara data på server", onClick = function(e)
-			native.showAlert("Varning!", "Är du säker på att du vill ladda upp data till servern?", {"Ja", "Nej"}, function(e)
-				if e.action == "clicked" then
-					if e.index == 1 then -- "Ja"
-						saveManager:saveData(_G.getMyData(), function(e)
-							if e.success then
-								native.showAlert("Yaay!", e.message, {"Ok"}, function(e)
-									-- void
-								end)
-							else
-								native.showAlert("Varning!", e.message, {"Ok"}, function(e)
-									-- void
-								end)
-							end
-						end)
-					else
+	local loadSideMenu
+	function loadSideMenu()
+		if sideMenu then
+			display.remove(sideMenu)
+			sideMenu = nil
+		end
+		local buttons =
+		{
+			{title = "Uppdatera data från IMDB", onClick = downloadAllTitles},
+			{title = "Utan bild", onClick = function(e) setView("normal") end},
+			{title = "Med bild", onClick = function(e) setView("photo") end},
+			{title = _G.getSettings().username and "Byt användare" or "Logga in", onClick = function(e)
+				_G.loginScreen(function(e)
+					if e.cancel then
 						-- void
+					else
+						_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
+						loadSideMenu()
 					end
-				end
-			end)
-		end},
-		{title = "Ladda data från server", onClick = function(e)
-			native.showAlert("Varning!", "Är du säker på att du vill ladda ner data från server?\n\nDin tidigare data kommer att försvinna!", {"Ja", "Nej"}, function(e)
-				if e.action == "clicked" then
-					if e.index == 1 then -- "Ja"
-						saveManager:loadData(function(e)
-							if e.success then
-								if not (_G.tenfLib.trim(e.data or "") == "") then
-									local result = _G.setMyData(e.data)
-									if result then
-										native.showAlert("Yaay!", "Data hämtad från server, Vill du ladda ner all information om serierna/filmerna?", {"Ja", "Nej"}, function(e)
-											if e.action == "clicked" then
-												_G.reloadMyData()
-												if e.index == 1 then -- "Ja"
-													updateAllTitles(function()
+				end)
+			end}
+		}
+
+		if _G.getSettings().username then
+			table.insert(buttons, {title = "Spara data på server", onClick = function(e)
+				local settings = _G.getSettings()
+				local saveManager = require("modules.saveManager")(settings.username, settings.password)
+				
+				native.showAlert("Varning!", "Är du säker på att du vill ladda upp data till servern?", {"Ja", "Nej"}, function(e)
+					if e.action == "clicked" then
+						if e.index == 1 then -- "Ja"
+							saveManager:saveData(_G.getMyData(), function(e)
+								if e.success then
+									native.showAlert("Yaay!", e.message, {"Ok"}, function(e)
+										-- void
+									end)
+								else
+									native.showAlert("Varning!", e.message, {"Ok"}, function(e)
+										-- void
+									end)
+								end
+							end)
+						else
+							-- void
+						end
+					end
+				end)
+			end})
+
+			table.insert(buttons, (not _G.getSettings().username and nil) or {title = "Ladda data från server", onClick = function(e)
+				local settings = _G.getSettings()
+				local saveManager = require("modules.saveManager")(settings.username, settings.password)
+
+				native.showAlert("Varning!", "Är du säker på att du vill ladda ner data från server?\n\nDin tidigare data kommer att försvinna!", {"Ja", "Nej"}, function(e)
+					if e.action == "clicked" then
+						if e.index == 1 then -- "Ja"
+							saveManager:loadData(function(e)
+								if e.success then
+									if not (_G.tenfLib.trim(e.data or "") == "") then
+										local result = _G.setMyData(e.data)
+										if result then
+											native.showAlert("Yaay!", "Data hämtad från server, Vill du ladda ner all information om serierna/filmerna?", {"Ja", "Nej"}, function(e)
+												if e.action == "clicked" then
+													_G.reloadMyData()
+													if e.index == 1 then -- "Ja"
+														updateAllTitles(function()
+															reloadTitles(lastSearch)
+														end)
+													else
 														reloadTitles(lastSearch)
-													end)
-												else
-													reloadTitles(lastSearch)
+													end
 												end
-											end
-										end)
+											end)
+										else
+											native.showAlert("Varning!", "Hämtad data är korrupt.\n\nSätt dig ett tag och gråt, för detta är inte bra... :(", {"Ok"}, function(e)
+												-- void
+											end)
+										end
 									else
-										native.showAlert("Varning!", "Hämtad data är korrupt.\n\nSätt dig ett tag och gråt, för detta är inte bra... :(", {"Ok"}, function(e)
+										native.showAlert("Varning!", "Hittar ingen data med din användare.", {"Ok"}, function(e)
 											-- void
 										end)
 									end
 								else
-									native.showAlert("Varning!", "Hittar ingen data med din användare.", {"Ok"}, function(e)
+									native.showAlert("Varning!", e.message or "<what?>", {"Ok"}, function(e)
 										-- void
 									end)
 								end
-							else
-								native.showAlert("Varning!", e.message or "<what?>", {"Ok"}, function(e)
-									-- void
-								end)
-							end
-						end)
-					else
-						-- void
+							end)
+						else
+							-- void
+						end
 					end
-				end
-			end)
-		end}
-	}
-	local sideMenu = require("modules.sideMenu")(
-		{
-			parent = guiGroup,
-			buttons = buttons
-		}
-	)
-
-	sideMenu:addEventListener("beganDragging", function()
-		searchField.isVisible = false
-		if scrollView then
-			scrollView:setEnabled(false)
+				end)
+			end})
 		end
-	end)
 
-	sideMenu:addEventListener("closed", function()
-		searchField.isVisible = true
-		if scrollView then
-			scrollView:setEnabled(true)
-		end
-	end)
+		sideMenu = require("modules.sideMenu")(
+			{
+				parent = guiGroup,
+				buttons = buttons
+			}
+		)
+
+		sideMenu:addEventListener("beganDragging", function()
+			searchField.isVisible = false
+			if scrollView then
+				scrollView:setEnabled(false)
+			end
+		end)
+
+		sideMenu:addEventListener("closed", function()
+			searchField.isVisible = true
+			if scrollView then
+				scrollView:setEnabled(true)
+			end
+		end)
+	end
+	loadSideMenu()
 
 end
 -- Called BEFORE scene has moved onscreen:

@@ -369,6 +369,9 @@ do
 			*movieStart
 		
 			*typeOfView
+			*username
+			*password
+			*iduser
 	--]]
 	function _G.setSettings(settingsTable)
 		_G.setAttr(mySettings, settingsTable)
@@ -1279,7 +1282,130 @@ do
 end
 
 
+function _G.loginScreen(callback)
 
+	local parentGroup = display.newGroup()
+	local contentGroup = display.newGroup()
+	local bg = setAttr( display.newRect(parentGroup, 0, 0, _G._W, _G._H), {x=0, y=0}, {rp='TL', fc=0.4} )
+	bg:addEventListener("touch", function(e) return true end)
+	bg:addEventListener("tap", function(e) return true end)
+	parentGroup:insert(contentGroup)
+
+	local function gotoNext(event)
+		display.remove(parentGroup)
+		callback(event)
+	end
+
+	local usernameInput, passwordInput
+	local function Proceed(tryProceed)
+		if tryProceed then
+			local loginText = (_G.isSimulator and not _G.isIos) and "tompa" or usernameInput.text
+			local passText = (_G.isSimulator and not _G.isIos) and "hemligt123" or passwordInput.text
+			local saveManager = require("modules.saveManager")()
+			saveManager:login(loginText, passText, function(e)
+				if e.success then
+					native.showAlert("Yaay!", "Du är nu inloggad!", {"Ok"}, function()
+						gotoNext({cancel = false, iduser = e.data, username = loginText, password = passText})
+					end)
+				else
+					native.showAlert("Varning!", e.message, {"Ok"})
+				end
+			end)
+		else
+			gotoNext({cancel = true})
+		end
+
+	end
+
+	local options = 
+	{
+		text = "Fyll i inloggningsinfo till servern.\n(Du borde fått av Mattias eller Tommy)",
+		width = bg.width - 20,     --required for multi-line and alignment
+		font = _G.fontName,
+		fontSize = _G.fontSizeSmall,
+		align = "center",  --new alignment parameter
+		parent = contentGroup
+	}
+	local text = _G.setAttr(display.newText(options), {x = _G._w, y = 10}, {rp='TC', fc=0})
+
+
+	usernameInput = native.newTextField( 0, 0, _G._W - 50, 30 )
+	_G.setAttr(usernameInput, {placeholder = "Användarnamn", x = text.x, y = text.y + text.height + 10, font = native.newFont( _G.fontName, _G.fontSizeNormal )}, {rp='TC'})
+	contentGroup:insert(usernameInput)
+	usernameInput:addEventListener( "userInput", function(event)
+		if ( event.phase == "began" ) then
+			-- void
+		elseif ( event.phase == "ended" ) then
+			-- void
+		elseif ( event.phase == "submitted" ) then
+			native.setKeyboardFocus( passwordInput )
+		elseif ( event.phase == "editing" ) then
+
+		end
+	end )
+
+	passwordInput = native.newTextField( 0, 0, _G._W - 50, 30 )
+	_G.setAttr(passwordInput, {placeholder = "Lösenord", x = usernameInput.x, y = usernameInput.y + usernameInput.height + 10, font = native.newFont( _G.fontName, _G.fontSizeNormal )}, {rp='TC'})
+	contentGroup:insert(passwordInput)
+	passwordInput:addEventListener( "userInput", function(event)
+		if ( event.phase == "began" ) then
+			-- void
+		elseif ( event.phase == "ended" ) then
+			-- void
+		elseif ( event.phase == "submitted" ) then
+			Proceed(true)			
+		elseif ( event.phase == "editing" ) then
+
+		end
+	end )
+
+
+	local buttonSettings = {width = _G._W - 50, height = 30}
+	local buttonGrid = require("modules.buttonGrid")(contentGroup, buttonSettings)
+	local buttonGroup = display.newGroup()
+	contentGroup:insert(buttonGroup)
+
+	local buttonsInMenu = {
+		{title = "Logga in", onClick = function()
+			Proceed(true)
+		end},
+		{title = "Avbryt", onClick = function()
+			Proceed(false)
+		end}
+	}
+
+	for i, buttonData in ipairs(buttonsInMenu) do
+		local x, y = 0, buttonSettings.height / 2 + 10 + (i - 1) * (buttonSettings.height + 10)
+		local btn = buttonGrid:createButton(buttonData.title, x, y, buttonData.onClick)
+		buttonGroup:insert(btn)
+	end
+	setAttr(buttonGroup, {x = passwordInput.x, y = passwordInput.y + passwordInput.height + 20})
+
+	contentGroup.y = _G._H * 0.1
+
+--[[
+	usernameInput = page:append(ui.newTextInput("Användarnamn"))
+	passwordInput = page:append(ui.newTextInput("Lösenord", nil, true))
+
+
+	page:append(ui.newButton("Logga in", function()
+		Proceed(true)
+	end))
+	page:append(ui.newButton("Avbryt", function()
+		Proceed(false)
+	end))
+--]]
+end
+
+if not _G.getSettings().username then
+	_G.loginScreen(function(e)
+		if e.cancel then
+			-- void
+		else
+			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
+		end
+	end)
+end
 
 --=======================================================================================
 --=======================================================================================

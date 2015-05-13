@@ -1,6 +1,6 @@
 return function(_username, _password)
 	local obj = {}
-	local username, password = "tompa", "hemligt123"
+	local username, password = "", ""
 	if _username and _password then
 		username = _username
 		password = _password
@@ -94,6 +94,34 @@ return function(_username, _password)
 							onComplete({success = false, message = 'Nätverksfel!\n(Kan bero på att serverns IP är ändrat eller att du inte har internet)'})
 						end
 					end, params)
+				else
+					onComplete(parsedLoginResponse)
+				end
+			elseif eLogin.phase == "ended" then
+				onComplete({success = false, message = 'Nätverksfel!\n(Kan bero på att serverns IP är ändrat eller att du inte har internet)'})
+			end
+		end)
+	end
+
+	function obj:login(_username, _password, _onComplete)
+		
+		native.setActivityIndicator( true, "Loggar in" )
+
+		local function onComplete(...)
+			native.setActivityIndicator( false )
+			if _onComplete then _onComplete(...) end
+		end
+
+		local key = md5Hash(_username .. _password .. secret)
+		print(_username, _password, key)
+		network.request( url .. "/login.php?username=" .. _username .. "&password=" .. _password .. "&key=" .. key, "GET", function(eLogin)
+			if eLogin.phase == "ended" and not eLogin.isError then
+				
+				local parsedLoginResponse = _G.json.decode(eLogin.response)
+				parsedLoginResponse = parsedLoginResponse or {success = false, message = "Unknown error!\nPlease inform Tommy boy"}
+
+				if parsedLoginResponse.success then
+					onComplete(parsedLoginResponse)					
 				else
 					onComplete(parsedLoginResponse)
 				end
