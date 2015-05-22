@@ -1397,16 +1397,6 @@ function _G.loginScreen(callback)
 --]]
 end
 
-if not _G.getSettings().username then
-	_G.loginScreen(function(e)
-		if e.cancel then
-			-- void
-		else
-			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
-		end
-	end)
-end
-
 --=======================================================================================
 --=======================================================================================
 --= Initialisering ======================================================================
@@ -1476,8 +1466,23 @@ _G.navMenu = require("modules.navigationBar")(
 	}
 )
 
-_G.navMenu:setSelected(1)
-storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+local function goToStartScene()
+	_G.navMenu:setSelected(1)
+	storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+end
+
+if not _G.getSettings().username then
+	_G.loginScreen(function(e)
+		if e.cancel then
+			-- void
+		else
+			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
+		end
+		goToStartScene()
+	end)
+else
+	goToStartScene()
+end
 
 
 --=======================================================================================
