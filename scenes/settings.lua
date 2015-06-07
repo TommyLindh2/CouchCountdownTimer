@@ -110,7 +110,7 @@ function scene:createScene( event )
 
             local UsernameText = addChooserRow(loginGroup, "Användarnamn: " .. settings.username, {x = 30, y = subTitleLogin.y, height = subTitleLogin.height}, nil)
 
-            local UserId = addChooserRow(loginGroup, "AnvändarID: " .. (settings.userid or "Not found"), UsernameText, nil)
+            local UserId = addChooserRow(loginGroup, "AnvändarID: " .. (settings.iduser or "Not found"), UsernameText, nil)
 
             loginGroup.x, loginGroup.y = seriesGroup.x, divider.y + divider.height + padding
         ---
