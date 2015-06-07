@@ -152,7 +152,7 @@ return function(params)
 
 	local buttonGroup = _G.newGroup(contentGroup)
 	local buttonSettings = {width = bg.width - 50, height = 30}
-	local buttonGrid = require("modules.buttonGrid")(guiGroup, buttonSettings)
+	local buttonGrid = require("modules.buttonGrid")(contentGroup, buttonSettings)
 
 	for i, buttonData in ipairs(buttonsInMenu) do
 		local x, y = bg.x - bg.width / 2 + 10 + buttonSettings.width / 2, buttonSettings.height / 2 + 10 + (i - 1) * (buttonSettings.height + 10)

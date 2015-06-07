@@ -236,7 +236,7 @@ local storyboard         = require('storyboard')
 -- getDateString, getDateFromImdbString, isCompleteDate
 -- createTitle, createBg
 -- newImage, setRectMask
--- setKeyEventHandlers
+-- setKeyEventHandlers, getKeyEventHandlers
 -- broadcastEvent, dispatchBubblingEvent
 -- getDisplayDimensions
 -- getDiffTime, convertDiffToTable
@@ -855,6 +855,10 @@ do
 		return _G.tenfLib.tableCopy(myTitles, true)
 	end
 
+	function _G.loadTitle(imdbID)
+		return myTitles[imdbID]
+	end
+
 	function _G.loadTitleType(imdbID)
 		return myTitles[imdbID] and myTitles[imdbID].Type
 	end
@@ -1025,6 +1029,7 @@ end
 
 
 
+
 -- Som DisplayObject:dispatchEvent(), fast avfyras även av alla child-objekt
 -- Exempel:
 --   local function printHello()
@@ -1167,6 +1172,8 @@ function _G.scheduleNotifications()
 		for _, seasonData in ipairs(seriesData.seasons) do
 			local seasonNr = seasonData.seasonNr
 			local seasonMin, seasonMax
+			local titleData = _G.loadTitle(imdbID)
+
 			for episodeIndex, episodeData in ipairs(seasonData.episodes) do
 				local episodeNr = episodeData.episodeNr
 				if _G.isCompleteDate(episodeData.airdate) then
@@ -1178,11 +1185,13 @@ function _G.scheduleNotifications()
 					if settings["episodeStart"] then
 						local episodeString = _G.getEpisodeString(seasonNr, episodeNr)
 						local options = {
-						alert = seriesData.Title .. ",\n" .. episodeString .. " släpps " .. _G.getDateString(episodeData.airdate),
-						custom = { data = seasonData } }
+							alert = titleData.Title .. ",\n" .. episodeString .. " släpps " .. _G.getDateString(episodeData.airdate),
+							custom = { data = seasonData }
+						}
 
 						local diffInSeconds = _G.getDiffTime(episodeData.airdate)
 						if diffInSeconds > 0 then
+							print(options.alert)
 							system.scheduleNotification( diffInSeconds, options )
 						end
 					end
@@ -1192,8 +1201,9 @@ function _G.scheduleNotifications()
 			if settings["seasonStart"] then
 				if seasonMin then
 					local options = {
-					alert = seriesData.Title .. ",\nSäsong " .. seasonNr .. " börjar " .. _G.getDateString(seasonMin),
-					custom = { data = seasonData } }
+						alert = titleData.Title .. ",\nSäsong " .. seasonNr .. " börjar " .. _G.getDateString(seasonMin),
+						custom = { data = seasonData }
+					}
 
 					local diffInSeconds = _G.getDiffTime(seasonMin)
 					if diffInSeconds > 0 then
@@ -1204,7 +1214,7 @@ function _G.scheduleNotifications()
 			if settings["seasonEnd"] then
 				if seasonMax then
 					local options = {
-					alert = seriesData.Title .. ",\nSäsong " .. seasonNr .. " är slut " .. _G.getDateString(seasonMax),
+					alert = titleData.Title .. ",\nSäsong " .. seasonNr .. " är slut " .. _G.getDateString(seasonMax),
 					custom = { data = seasonData } }
 					local diffInSeconds = _G.getDiffTime(seasonMax)
 					if diffInSeconds > 0 then
@@ -1397,16 +1407,6 @@ function _G.loginScreen(callback)
 --]]
 end
 
-if not _G.getSettings().username then
-	_G.loginScreen(function(e)
-		if e.cancel then
-			-- void
-		else
-			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
-		end
-	end)
-end
-
 --=======================================================================================
 --=======================================================================================
 --= Initialisering ======================================================================
@@ -1476,8 +1476,25 @@ _G.navMenu = require("modules.navigationBar")(
 	}
 )
 
-_G.navMenu:setSelected(1)
-storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+
+local function goToStartScreen()
+	_G.navMenu:setSelected(1)
+	storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+end
+
+if not _G.getSettings().username then
+	_G.loginScreen(function(e)
+		if e.cancel then
+			-- void
+		else
+			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
+		end
+		goToStartScreen()
+	end)
+else
+	goToStartScreen()
+end
+
 
 
 --=======================================================================================

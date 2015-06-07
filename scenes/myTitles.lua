@@ -341,7 +341,10 @@ function scene:createScene( event )
 			{title = "Utan bild", onClick = function(e) setView("normal") end},
 			{title = "Med bild", onClick = function(e) setView("photo") end},
 			{title = _G.getSettings().username and "Byt användare" or "Logga in", onClick = function(e)
+				local prevHandlers = _G.keyEventHandlers
+				_G.setKeyEventHandlers()
 				_G.loginScreen(function(e)
+					_G.setKeyEventHandlers(prevHandlers)
 					if e.cancel then
 						-- void
 					else
