@@ -32,8 +32,6 @@ local reloadTitles
 local searchFunction, filtersFunction
 local updateAllTitles
 
-local saveManager = require("modules.saveManager")('tompa', 'hemligt123')
-
 function updateAllTitles(_onComplete)
 	_G.downloadTitles(_G.loadTitles(), function(args)
 		if args.counter >= args.total then
@@ -328,50 +326,9 @@ function scene:createScene( event )
 
 	local buttons =
 	{
-		{title = "Uppdatera data från IMDB", onClick = downloadAllTitles},
+		{title = "Ladda ner allt!", onClick = downloadAllTitles},
 		{title = "Utan bild", onClick = function(e) setView("normal") end},
 		{title = "Med bild", onClick = function(e) setView("photo") end},
-		--{title = "Server:", type = 'separator'},
-		{title = "Spara data på server", onClick = function(e)
-			saveManager:saveData(_G.getMyData(), function(e)
-				if e.success then
-					native.showAlert("Yaay!", "Data sparad på server", {"Ok"}, function(e)
-						-- void
-					end)
-				else
-					native.showAlert("Varning!", e.message, {"Ok"}, function(e)
-						-- void
-					end)
-				end
-			end)
-		end},
-		{title = "Ladda data från server", onClick = function(e)
-			saveManager:loadData(function(e)
-				if e.success then
-					if not (_G.tenfLib.trim(e.data) == "") then
-						local result = _G.setMyData(e.data)
-						if result then
-							native.showAlert("Yaay!", "Data hämtad från server", {"Ok"}, function(e)
-								_G.reloadMyData()
-								reloadTitles(lastSearch)
-							end)
-						else
-							native.showAlert("Varning!", "Hämtad data är korrupt.\n\nSätt dig ett tag och gråt, för detta är inte bra... :(", {"Ok"}, function(e)
-								-- void
-							end)
-						end
-					else
-						native.showAlert("Varning!", "Hittar ingen data med din användare.", {"Ok"}, function(e)
-							-- void
-						end)
-					end
-				else
-					native.showAlert("Varning!", e.message, {"Ok"}, function(e)
-						-- void
-					end)
-				end
-			end)
-		end}
 	}
 	local sideMenu = require("modules.sideMenu")(
 		{
