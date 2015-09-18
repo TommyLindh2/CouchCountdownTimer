@@ -45,20 +45,22 @@ function scene:createScene( event )
         text.anchorX, text.anchorY = 0, 0
         text.x, text.y = 0, 0
 
-        local check = require("modules.checkBox")(row, 0, 0, text.height, 5)
-        check.x, check.y = _G._W - check.width / 2 - marginSides*2, text.height / 2
+        if setting then
+            local check = require("modules.checkBox")(row, 0, 0, text.height, 5)
+            check.x, check.y = _G._W - check.width / 2 - marginSides*2, text.height / 2
 
-        local settingValue = not not mySettings[setting]
-        check:setChecked(settingValue)
+            local settingValue = not not mySettings[setting]
+            check:setChecked(settingValue)
 
-        check:addEventListener("check", function(e)
-            local settingsId = check.parent.setting
-            if not settingsId then return end
+            check:addEventListener("check", function(e)
+                local settingsId = check.parent.setting
+                if not settingsId then return end
 
-            local settings = {}
-            settings[settingsId] = e.checked
-            _G.setSettings(settings)
-        end)
+                local settings = {}
+                settings[settingsId] = e.checked
+                _G.setSettings(settings)
+            end)
+        end
 
         row.x, row.y = marginSides, previous.y + previous.height + padding
 
@@ -70,27 +72,21 @@ function scene:createScene( event )
     -- Filmer
         local movieGroup = _G.newGroup(guiGroup)
 
-        local subTitleMovies = display.newText(movieGroup, "Filmer:", 0, 0, _G.fontName, _G.fontSizeLarge)
-        subTitleMovies.anchorX, subTitleMovies.anchorY = 0, 0
-        subTitleMovies.x, subTitleMovies.y = 10, 0
+        local subTitleMovies = _G.setAttr( display.newText(movieGroup, "Filmer:", 0, 0, _G.fontName, _G.fontSizeLarge), {x = 10, y = 0}, {rp='TL'} )
 
         local movieAirDateText = addChooserRow(movieGroup, "Film släpps:", {x = 0, y = subTitleMovies.y, height = subTitleMovies.height}, "movieStart")
 
         movieGroup.x, movieGroup.y = 0, title.y + title.height + padding
     ---
 
-    local lineY = movieGroup.y + movieGroup.height + padding * 3
+    local lineY = movieGroup.y + movieGroup.height + padding * 1.5
     local divider = display.newLine(guiGroup, 10, lineY, _G._W - 10, lineY)
     divider.strokeWidth = 2
-
-    
 
     -- Serier
         local seriesGroup = _G.newGroup(guiGroup)
 
-        local subTitleSeries = display.newText(seriesGroup, "Serier:", 0, 0, _G.fontNameBold, _G.fontSizeLarge)
-        subTitleSeries.anchorX, subTitleSeries.anchorY = 0, 0
-        subTitleSeries.x, subTitleSeries.y = 10, 0
+        local subTitleSeries = _G.setAttr( display.newText(seriesGroup, "Serier:", 0, 0, _G.fontNameBold, _G.fontSizeLarge), {x = 10, y = 0}, {rp='TL'} )
 
         local newSeasonStartText = addChooserRow(seriesGroup, "Säsong startar:", {x = 30, y = subTitleSeries.y, height = subTitleSeries.height}, "seasonStart")
 
@@ -98,9 +94,28 @@ function scene:createScene( event )
 
         local newEpisodeStartText = addChooserRow(seriesGroup, "Episod släpps:", newSeasonEndText, "episodeStart")
 
-        seriesGroup.x, seriesGroup.y = movieGroup.x, divider.y + divider.height + padding * 3
+        seriesGroup.x, seriesGroup.y = movieGroup.x, divider.y + divider.height + padding
     ---
 
+    local lineY = seriesGroup.y + seriesGroup.height + padding * 1.5
+    local divider = display.newLine(guiGroup, 10, lineY, _G._W - 10, lineY)
+    divider.strokeWidth = 2
+-- [[
+    local settings = _G.getSettings()
+    if settings.username then
+        -- Login
+            local loginGroup = _G.newGroup(guiGroup)
+
+            local subTitleLogin = _G.setAttr( display.newText(loginGroup, "Inloggning:", 0, 0, _G.fontNameBold, _G.fontSizeLarge), {x = 10, y = 0}, {rp='TL'} )
+
+            local UsernameText = addChooserRow(loginGroup, "Användarnamn: " .. settings.username, {x = 30, y = subTitleLogin.y, height = subTitleLogin.height}, nil)
+
+            local UserId = addChooserRow(loginGroup, "AnvändarID: " .. (settings.iduser or "Not found"), UsernameText, nil)
+
+            loginGroup.x, loginGroup.y = seriesGroup.x, divider.y + divider.height + padding
+        ---
+    end
+--]]
     _G.setKeyEventHandlers(
         {
             back = function(e)

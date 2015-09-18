@@ -2883,28 +2883,31 @@ end
 do
 	local emptyTable = {}
 	local rps = {
-		TL=display.TopLeftReferencePoint,
-		TC=display.TopCenterReferencePoint,
-		TR=display.TopRightReferencePoint,
-		CL=display.CenterLeftReferencePoint,
-		C=display.CenterReferencePoint,
-		CR=display.CenterRightReferencePoint,
-		BL=display.BottomLeftReferencePoint,
-		BC=display.BottomCenterReferencePoint,
-		BR=display.BottomRightReferencePoint
+		TL={0, 0},		--display.TopLeftReferencePoint,
+		TC={0.5, 0},	--display.TopCenterReferencePoint,
+		TR={1, 0},		--display.TopRightReferencePoint,
+		CL={0, 0.5},	--display.CenterLeftReferencePoint,
+		C={0.5, 0.5},	--display.CenterReferencePoint,
+		CR={0.5, 1},	--display.CenterRightReferencePoint,
+		BL={1, 0},		--display.BottomLeftReferencePoint,
+		BC={1, 0.5},	--display.BottomCenterReferencePoint,
+		BR={1, 1},		--display.BottomRightReferencePoint
 	}
 	function setAttr(obj, attrs, special)
 		attrs = attrs or emptyTable
 		special = special or emptyTable
 		if special.p then special.p:insert(obj) end
 		if special.s then obj:scale(special.s, special.s) end
-		--[[
+		-- [[
 		if special.rp then
+			obj.anchorX, obj.anchorY = rps[special.rp][1], rps[special.rp][2]
+			--[[
 			if type(special.rp)=='table' then
 				obj.xReference,obj.yReference=special.rp[1],special.rp[2]
 			else
 				obj:setReferencePoint(rps[special.rp])
 			end
+			--]]
 		end
 		--]]
 		for k, v in pairs(attrs) do obj[k] = v end

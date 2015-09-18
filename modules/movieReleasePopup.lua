@@ -15,7 +15,8 @@ return function(parent, data)
 	local group = _G.newGroup(parent)
 	group.x, group.y = _G._w, _G._h
 
-	native.setActivityIndicator(true, "Hämtar filminformation om:\n\"" .. movieInfo.Title .."\"")
+	local indicatorText = "Hämtar filminformation" .. (movieInfo.Title and "om:\n\"" .. movieInfo.Title .."\"" or ".")
+	native.setActivityIndicator(true,  indicatorText)
 
 
 	if _G.movieExists(movieInfo.imdbID) then
