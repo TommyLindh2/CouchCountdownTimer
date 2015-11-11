@@ -8,7 +8,7 @@ function dragFunction(e)
 	if e.target.master.inTransition then display.getCurrentStage():setFocus(nil); e.target.focused = false; return end
 	local master = e.target.master
 	if e.phase == "began" then
-		
+		native.setKeyboardFocus( nil )
 	elseif e.target.focused then
 		if e.phase == "moved" then
 

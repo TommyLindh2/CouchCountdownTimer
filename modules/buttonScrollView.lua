@@ -2,6 +2,7 @@ local widget = require( "widget" )
 local tenfLib = require("modules.utils.tenfLib")
 
 return function(_parent, settings, onTouch, checkBoxTouch)
+	local tableView
 
 	local padding = 10
 	settings = settings or {}
@@ -65,6 +66,12 @@ return function(_parent, settings, onTouch, checkBoxTouch)
 			local seen = viewData.seen
 			if seen then
 				check = require("modules.checkBox")(rowGroup, 0, 0, checkBoxSize.size, checkBoxSize.inVisible)
+			    check:addEventListener("checkEnded", function(e)
+			    	if tableView then tableView:setEnabled(true) end
+			    end)
+			    check:addEventListener("checkBegan", function(e)
+			    	if tableView then tableView:setEnabled(false) end
+			    end)
 			    check:addEventListener("check", function(e)
 			        if checkBoxTouch then
 			        	local event = _G.tenfLib.tableCopy(e)
@@ -258,7 +265,7 @@ return function(_parent, settings, onTouch, checkBoxTouch)
 		rowTitle:setFillColor(unpack(textColor))
 		bg:setFillColor(unpack(bgColor))
 	end
-	local tableView
+	
 	-- Handle touches on the row
 	local function onRowTouch( event )
 		local phase = event.phase
@@ -337,6 +344,10 @@ return function(_parent, settings, onTouch, checkBoxTouch)
 		self:deleteAllRows()
 		rowData = {}
 		--tableView.tapped = false
+	end
+
+	function tableView:getContentHeight()
+		return math.max(0, #rowData * (rowHeight + padding) - padding)
 	end
 
 	function tableView:setTypeOfView(_type)

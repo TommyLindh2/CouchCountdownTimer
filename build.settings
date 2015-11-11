@@ -28,6 +28,14 @@ settings = {
 		},
 	},
 
+	plugins =
+    {
+        ["plugin.notifications"] =
+        {
+            publisherId = "com.coronalabs"
+        },
+    },   
+
 	android = {
 		largeHeap = true,
 		usesPermissions = {
@@ -36,7 +44,7 @@ settings = {
 			'android.permission.STATUS_BAR',
 			'android.permission.WRITE_EXTERNAL_STORAGE',
 		},
-		versionCode = '10' -- This means version 1.0 and 11 is 1.1 and so on
+		versionCode = '30' -- This means version 1.0 and 11 is 1.1 and so on
 	},
 
 }

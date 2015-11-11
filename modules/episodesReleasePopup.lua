@@ -147,7 +147,13 @@ return function(parent, data)
 									local scale = e.target.orgScale
 									local x, y = e.target.orgPos.x, e.target.orgPos.y
 									transition.to(e.target, {time = 500, anchorX = 0, anchorY = 0, x = x, y = y, xScale = scale, yScale = scale, transition = easing.inOutQuad})
-									transition.to(coverBG, {time = 500, alpha = 0, transition = easing.inOutQuad})
+									transition.to(coverBG, {time = 500, alpha = 0, transition = easing.inOutQuad, onComplete = function()
+										if scrollViewEpisodes then
+											scrollViewEpisodes:setEnabled(true)
+										else
+											scrollViewSeasons:setEnabled(true)
+										end
+									end})
 									zoomed = false
 									display.currentStage:setFocus(nil)
 								end
@@ -163,6 +169,11 @@ return function(parent, data)
 							transition.to(e.target, {time = 500, anchorX = 0.5, anchorY = 0.5, x = x, y = y, xScale = scale, yScale = scale, transition = easing.inOutQuad})
 							transition.to(coverBG, {time = 500, alpha = _G.blackoutAlpha, transition = easing.inOutQuad})
 							zoomed = true
+							if scrollViewEpisodes then
+								scrollViewEpisodes:setEnabled(false)
+							else
+								scrollViewSeasons:setEnabled(false)
+							end
 							display.currentStage:setFocus(coverBG)
 						end
 					end
@@ -358,7 +369,7 @@ return function(parent, data)
 				end
 				loadEpisodes()
 			end
-
+			if scrollViewEpisodes then display.remove(scrollViewEpisodes); scrollViewEpisodes = nil end
 			scrollViewEpisodes = scrollViewCreator(group, settingsEpisodes, function(e)
 				if e.data.ignore then return end
 

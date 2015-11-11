@@ -61,11 +61,12 @@ return function(parent, x, y, size, largener)
 				obj[focusKey] = nil
 				focusEvent.name = 'focusEnded'
 				focusEvent.over = _G.tenfLib.pointInRect(e.x, e.y, bounds.xMin-of, bounds.yMin-of, bounds.xMax-bounds.xMin+of*2, bounds.yMax-bounds.yMin+of*2)
-				obj:dispatchEvent(focusEvent)
 				if focusEvent.over then
-					focusEvent.name, focusEvent.over = 'focusEndedOver', nil
-					obj:dispatchEvent(focusEvent)
+					local overEvent = _G.tenfLib.tableCopy(focusEvent)
+					overEvent.name, overEvent.over = 'focusEndedOver', nil
+					obj:dispatchEvent(overEvent)
 				end
+				obj:dispatchEvent(focusEvent)
 			end
 		end
 		return true
@@ -93,6 +94,7 @@ return function(parent, x, y, size, largener)
 			return
 		end
 		e.target:setOverColor()
+		e.target:dispatchEvent({name = "checkBegan"})
 		return true
 	end)
 
@@ -115,6 +117,7 @@ return function(parent, x, y, size, largener)
 			return
 		end
 		e.target:setNormalColor()
+		e.target:dispatchEvent({name = "checkEnded"})
 	end)
 
 	checkBox:addEventListener("focusEndedOver", function(e)
@@ -128,7 +131,6 @@ return function(parent, x, y, size, largener)
 		else
 			e.target:setChecked(not e.target:getChecked())
 		end
-
 		
 		e.target:dispatchEvent({name = "check", checked = e.target:getChecked(), target = e.target})
 		e.target:dispatchEvent({name = "checkAlt", checked = e.target:getCheckedAlt(), target = e.target})

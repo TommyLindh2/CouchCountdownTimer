@@ -11,6 +11,7 @@ _G.isSimulator             = system.getInfo('environment') == 'simulator'
 _G.isAndroid               = system.getInfo('platformName') == 'Android'
 _G.isIos                   = system.getInfo('platformName') == 'iPhone OS' or system.getInfo('platformName') == 'Mac OS X'
 _G.isIpad                  = system.getInfo('model') == 'iPad'
+_G.notifications 		   = require( "plugin.notifications" )
 
 -- Konstanter
 _G._W, _G._H               = display.actualContentWidth, display.actualContentHeight
@@ -31,7 +32,6 @@ _G.mySettingsSaveFile  		= "mySettings" .. fileExtension
 _G.myFiltersSaveFile  		= "myFilters" .. fileExtension
 _G.myHiddenSaveFile  		= "myHiddens" .. fileExtension
 _G.myLastDownloadSaveFile	= "myLastDownload" .. fileExtension
-
 
 _G.dataToSendReceive = 
 {
@@ -150,19 +150,38 @@ function _G.getMyData()
 
 	for name, dataToGet in pairs(_G.dataToSendReceive or {}) do
 		local loadedData = _G.tenfLib.jsonLoad(dataToGet.file)
-		data[name] = loadedData
+		local dataToSend
+		if name == "titles" then
+			dataToSend = {}
+			for imdbID, titleData in pairs(loadedData) do
+				dataToSend[imdbID] = {
+					Type = titleData.Type,
+					imdbID = imdbID
+				}
+			end
+		elseif not dataToGet.remove then
+			dataToSend = loadedData
+		end
+		data[name] = dataToSend
 	end
 
-	local jsonBlob = require('json').encode(data)
+	local jsonBlob = _G.json.encode(data)
 	return _G.base64.encode(jsonBlob)
 end
 
 function _G.setMyData(data)
 
 	local jsonBlob = _G.base64.decode(data)
-	local tableData = require('json').decode(jsonBlob)
+	local tableData = _G.json.decode(jsonBlob)
 
 	if type(tableData) == 'table' then
+		for k,v in pairs(_G.dataToSendReceive) do
+			if v.remove then
+				
+				print( "Remove: ", os.remove( system.pathForFile( v.file, system.DocumentsDirectory ) ) )
+			end
+		end
+
 		for key, dataToSet in pairs(tableData or {}) do
 			if _G.dataToSendReceive[key] then
 				_G.tenfLib.jsonSave(_G.dataToSendReceive[key].file, dataToSet)
@@ -338,6 +357,7 @@ do
 
 	function _G.reloadMySettings()
 		mySettings = _G.tenfLib.jsonLoad(_G.mySettingsSaveFile) or {}
+		mySettings.serveraddress = "http://85.226.14.142/CouchTimer"
 	end
 	_G.reloadMySettings()
 
@@ -350,6 +370,11 @@ do
 			*movieStart
 		
 			*typeOfView
+			
+			*username
+			*password
+			*iduser
+			*serveraddress
 	--]]
 	function _G.setSettings(settingsTable)
 		_G.setAttr(mySettings, settingsTable)
@@ -1114,18 +1139,24 @@ end
 
 function _G.scheduleNotifications()
 	--Avbryter alla nuvarande notifications
-	system.cancelNotification()
+	_G.notifications.cancelNotification()
 
 	local settings = _G.getSettings()
 	--[[
 		settingsTable:
-			* "seasonStart"
-			* "seasonEnd"
-			* "episodeStart"
+			settingsTable:
+			*seasonStart
+			*seasonEnd
+			*episodeStart
 
-			* "movieStart"
+			*movieStart
+		
+			*typeOfView
 			
-			* "withImage"
+			*username
+			*password
+			*iduser
+			*serveraddress
 	--]]
 	local myMovies, mySeries = _G.loadAllMoviesAndSeries()
 	
@@ -1149,7 +1180,7 @@ function _G.scheduleNotifications()
 
 						local diffInSeconds = _G.getDiffTime(episodeData.airdate)
 						if diffInSeconds > 0 then
-							system.scheduleNotification( diffInSeconds, options )
+							_G.notifications.scheduleNotification( diffInSeconds, options )
 						end
 					end
 				end
@@ -1163,7 +1194,7 @@ function _G.scheduleNotifications()
 
 					local diffInSeconds = _G.getDiffTime(seasonMin)
 					if diffInSeconds > 0 then
-						system.scheduleNotification( diffInSeconds, options )
+						_G.notifications.scheduleNotification( diffInSeconds, options )
 					end
 				end
 			end
@@ -1174,7 +1205,7 @@ function _G.scheduleNotifications()
 					custom = { data = seasonData } }
 					local diffInSeconds = _G.getDiffTime(seasonMax)
 					if diffInSeconds > 0 then
-						system.scheduleNotification( diffInSeconds, options )
+						_G.notifications.scheduleNotification( diffInSeconds, options )
 					end
 				end
 			end
@@ -1190,7 +1221,7 @@ function _G.scheduleNotifications()
 				custom = { data = movieData } }
 				local diffInSeconds = _G.getDiffTime(movieData.Released)
 				if diffInSeconds > 0 then
-					system.scheduleNotification( diffInSeconds, options )
+					_G.notifications.scheduleNotification( diffInSeconds, options )
 				end
 			end
 		end
@@ -1247,6 +1278,135 @@ do
 	end
 end
 
+function _G.loginScreen(callback)
+
+	local parentGroup = display.newGroup()
+	local contentGroup = display.newGroup()
+	local bg = setAttr( display.newRect(parentGroup, 0, 0, _G._W, _G._H), {x=0, y=0}, {rp='TL', fc=0.4} )
+	bg:addEventListener("touch", function(e) return true end)
+	bg:addEventListener("tap", function(e) return true end)
+	parentGroup:insert(contentGroup)
+
+	local function gotoNext(event)
+		display.remove(parentGroup)
+		callback(event)
+	end
+
+	local usernameInput, passwordInput, ipAddressInput
+	local function Proceed(tryProceed)
+		if tryProceed then
+			local loginText = (_G.isSimulator and not _G.isIos) and "tompa" or usernameInput.text
+			local passText = (_G.isSimulator and not _G.isIos) and "hemligt123" or passwordInput.text
+			local saveManager = require("modules.saveManager")()
+			saveManager:login(loginText, passText, function(e)
+				if e.success then
+					native.showAlert("Yaay!", "Du är nu inloggad!", {"Ok"}, function()
+						gotoNext({cancel = false, iduser = e.data, username = loginText, password = passText})
+					end)
+				else
+					native.showAlert("Varning!", e.message, {"Ok"})
+				end
+			end)
+		else
+			gotoNext({cancel = true})
+		end
+
+	end
+
+	local options = 
+	{
+		text = "Fyll i inloggningsinfo till servern.\n(Du borde fått av Mattias eller Tommy)",
+		width = bg.width - 20,     --required for multi-line and alignment
+		font = _G.fontName,
+		fontSize = _G.fontSizeSmall,
+		align = "center",  --new alignment parameter
+		parent = contentGroup
+	}
+	local text = _G.setAttr(display.newText(options), {x = _G._w, y = 10}, {rp='TC', fc=0})
+
+	ipAddressInput = native.newTextField( 0, 0, _G._W - 50, 30 )
+	_G.setAttr(ipAddressInput, {text = _G.getSettings().serveraddress, placeholder = "Serveradress", x = text.x, y = text.y + text.height + 10, font = native.newFont( _G.fontName, _G.fontSizeNormal )}, {rp='TC'})
+	contentGroup:insert(ipAddressInput)
+	ipAddressInput:addEventListener( "userInput", function(event)
+		if ( event.phase == "began" ) then
+			-- void
+		elseif ( event.phase == "ended" ) then
+			-- void
+		elseif ( event.phase == "submitted" ) then
+			native.setKeyboardFocus( usernameInput )
+		elseif ( event.phase == "editing" ) then
+
+		end
+	end )
+	
+
+	usernameInput = native.newTextField( 0, 0, _G._W - 50, 30 )
+	_G.setAttr(usernameInput, {placeholder = "Användarnamn", x = ipAddressInput.x, y = ipAddressInput.y + ipAddressInput.height + 10, font = native.newFont( _G.fontName, _G.fontSizeNormal )}, {rp='TC'})
+	contentGroup:insert(usernameInput)
+	usernameInput:addEventListener( "userInput", function(event)
+		if ( event.phase == "began" ) then
+			-- void
+		elseif ( event.phase == "ended" ) then
+			-- void
+		elseif ( event.phase == "submitted" ) then
+			native.setKeyboardFocus( passwordInput )
+		elseif ( event.phase == "editing" ) then
+
+		end
+	end )
+
+	passwordInput = native.newTextField( 0, 0, _G._W - 50, 30 )
+	_G.setAttr(passwordInput, {placeholder = "Lösenord", x = usernameInput.x, y = usernameInput.y + usernameInput.height + 10, font = native.newFont( _G.fontName, _G.fontSizeNormal )}, {rp='TC'})
+	contentGroup:insert(passwordInput)
+	passwordInput:addEventListener( "userInput", function(event)
+		if ( event.phase == "began" ) then
+			-- void
+		elseif ( event.phase == "ended" ) then
+			-- void
+		elseif ( event.phase == "submitted" ) then
+			Proceed(true)			
+		elseif ( event.phase == "editing" ) then
+
+		end
+	end )
+
+
+	local buttonSettings = {width = _G._W - 50, height = 30}
+	local buttonGrid = require("modules.buttonGrid")(contentGroup, buttonSettings)
+	local buttonGroup = display.newGroup()
+	contentGroup:insert(buttonGroup)
+
+	local buttonsInMenu = {
+		{title = "Logga in", onClick = function()
+			Proceed(true)
+		end},
+		{title = "Avbryt", onClick = function()
+			Proceed(false)
+		end}
+	}
+
+	for i, buttonData in ipairs(buttonsInMenu) do
+		local x, y = 0, buttonSettings.height / 2 + 10 + (i - 1) * (buttonSettings.height + 10)
+		local btn = buttonGrid:createButton(buttonData.title, x, y, buttonData.onClick)
+		buttonGroup:insert(btn)
+	end
+	setAttr(buttonGroup, {x = passwordInput.x, y = passwordInput.y + passwordInput.height + 20})
+
+	contentGroup.y = _G._H * 0.1
+
+--[[
+	usernameInput = page:append(ui.newTextInput("Användarnamn"))
+	passwordInput = page:append(ui.newTextInput("Lösenord", nil, true))
+
+
+	page:append(ui.newButton("Logga in", function()
+		Proceed(true)
+	end))
+	page:append(ui.newButton("Avbryt", function()
+		Proceed(false)
+	end))
+--]]
+end
 
 
 
@@ -1319,8 +1479,25 @@ _G.navMenu = require("modules.navigationBar")(
 	}
 )
 
-_G.navMenu:setSelected(1)
-storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+local function goToStartScene()
+	_G.navMenu:setSelected(1)
+	storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+end
+
+if not _G.getSettings().username then
+	_G.loginScreen(function(e)
+		if e.cancel then
+			-- void
+		else
+			_G.setSettings({username = e.username, password = e.password, iduser = e.iduser})
+		end
+		goToStartScene()
+	end)
+else
+	goToStartScene()
+end
+
+
 
 
 --=======================================================================================
@@ -1332,6 +1509,20 @@ end
 
 -- require('modules.utils.debugView')(display.currentStage)
 
+-- Listen for notifications
+local function onNotification( event )
+    native.showAlert("Kolla!", event.alert)
+end
+Runtime:addEventListener( "notification", onNotification )
 
+-- The launch arguments provide a notification event if this app was started when the user tapped on a notification
+-- In this case, you must call the notification listener manually
+if ( _G.launchArgs and _G.launchArgs.notification ) then
+    onNotification( _G.launchArgs.notification )
+end
 
-
+--[[
+_G.notifications.scheduleNotification( 5, {
+    alert = "Funkar det??"
+})
+]]

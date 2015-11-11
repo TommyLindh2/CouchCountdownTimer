@@ -18,7 +18,6 @@ return function(parent, data)
 	local indicatorText = "Hämtar filminformation" .. (movieInfo.Title and "om:\n\"" .. movieInfo.Title .."\"" or ".")
 	native.setActivityIndicator(true,  indicatorText)
 
-
 	if _G.movieExists(movieInfo.imdbID) then
 		timer.performWithDelay(0, function()
 			native.setActivityIndicator(false)
