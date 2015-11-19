@@ -1,16 +1,7 @@
 
 
-local storyboard = require( "storyboard" )
-local scene = storyboard.newScene()
-
-----------------------------------------------------------------------------------
--- 
---      NOTE:
---      
---      Code outside of listener functions (below) will only be executed once,
---      unless storyboard.removeScene() is called.
--- 
----------------------------------------------------------------------------------
+local composer = require( "composer" )
+local scene = composer.newScene()
 
 
 -- local forward references should go here --
@@ -49,7 +40,7 @@ function updateAllTitles(_onComplete)
 end
 
 -- Called when the scene's view does not exist:
-function scene:createScene( event )
+function scene:create( event )
 	local sceneView = self.view
 	
 	local bgGroup = _G.newGroup(sceneView)
@@ -450,107 +441,31 @@ function scene:createScene( event )
 	end
 	loadSideMenu()
 end
--- Called BEFORE scene has moved onscreen:
-function scene:willEnterScene( event )
-	local group = self.view
-
-	-----------------------------------------------------------------------------
-
-	--      This event requires build 2012.782 or later.
-
-	-----------------------------------------------------------------------------
-
-end
-
-
--- Called immediately after scene has moved onscreen:
-function scene:enterScene( event )
-		local group = self.view
-
-		-----------------------------------------------------------------------------
-
-		--      INSERT code here (e.g. start timers, load audio, start listeners, etc.)
-
-		-----------------------------------------------------------------------------
-
-end
-
 
 -- Called when scene is about to move offscreen:
-function scene:exitScene( event )
+local sceneName
+function scene:hide( event )
 		local group = self.view
+		local phase = event.phase
 
-		if popup then
-			_G.tenfLib.removeEventListeners(popup)
-			popup:close()
+		if phase == "will" then
+			sceneName = composer.getCurrentSceneName()
+			if searchField then
+				searchField:removeSelf()
+				searchField = nil
+			end
+        elseif phase == "did" then
+			if popup then
+				_G.tenfLib.removeEventListeners(popup)
+				popup:close()
+			end
+
+			timer.performWithDelay(0, function()
+				composer.removeScene(sceneName)
+				native.setKeyboardFocus( nil )
+			end)
 		end
-
-		if searchField then
-			searchField:removeSelf()
-			searchField = nil
-		end
-
-		local sceneName = storyboard.getCurrentSceneName()
-		timer.performWithDelay(0, function()
-			storyboard.removeScene(sceneName)
-			native.setKeyboardFocus( nil )
-		end)
 end
-
-
--- Called AFTER scene has finished moving offscreen:
-function scene:didExitScene( event )
-		local group = self.view
-
-		-----------------------------------------------------------------------------
-
-		--      This event requires build 2012.782 or later.
-
-		-----------------------------------------------------------------------------
-
-end
-
-
--- Called prior to the removal of scene's "view" (display group)
-function scene:destroyScene( event )
-		local group = self.view
-
-		-----------------------------------------------------------------------------
-
-		--      INSERT code here (e.g. remove listeners, widgets, save state, etc.)
-
-		-----------------------------------------------------------------------------
-
-end
-
-
--- Called if/when overlay scene is displayed via storyboard.showOverlay()
-function scene:overlayBegan( event )
-		local group = self.view
-		local overlay_name = event.sceneName  -- name of the overlay scene
-
-		-----------------------------------------------------------------------------
-
-		--      This event requires build 2012.797 or later.
-
-		-----------------------------------------------------------------------------
-
-end
-
-
--- Called if/when overlay scene is hidden/removed via storyboard.hideOverlay()
-function scene:overlayEnded( event )
-		local group = self.view
-		local overlay_name = event.sceneName  -- name of the overlay scene
-
-		-----------------------------------------------------------------------------
-
-		--      This event requires build 2012.797 or later.
-
-		-----------------------------------------------------------------------------
-
-end
-
 
 
 ---------------------------------------------------------------------------------
@@ -558,30 +473,12 @@ end
 ---------------------------------------------------------------------------------
 
 -- "createScene" event is dispatched if scene's view does not exist
-scene:addEventListener( "createScene", scene )
+scene:addEventListener( "create", scene )
 
--- "willEnterScene" event is dispatched before scene transition begins
-scene:addEventListener( "willEnterScene", scene )
-
--- "enterScene" event is dispatched whenever scene transition has finished
-scene:addEventListener( "enterScene", scene )
 
 -- "exitScene" event is dispatched before next scene's transition begins
-scene:addEventListener( "exitScene", scene )
+scene:addEventListener( "hide", scene )
 
--- "didExitScene" event is dispatched after scene has finished transitioning out
-scene:addEventListener( "didExitScene", scene )
-
--- "destroyScene" event is dispatched before view is unloaded, which can be
--- automatically unloaded in low memory situations, or explicitly via a call to
--- storyboard.purgeScene() or storyboard.removeScene().
-scene:addEventListener( "destroyScene", scene )
-
--- "overlayBegan" event is dispatched when an overlay scene is shown
-scene:addEventListener( "overlayBegan", scene )
-
--- "overlayEnded" event is dispatched when an overlay scene is hidden/removed
-scene:addEventListener( "overlayEnded", scene )
 
 ---------------------------------------------------------------------------------
 

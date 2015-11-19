@@ -50,16 +50,15 @@ return function(parent, buttonDataList, fade)
 
 	local transitionId
 
-	local tabOver = _G.setAttr(display.newRect(contentGroup--[[, 'images/navigationMenu/tabBar.png']],0,0, _G._W, tabHeight), {x=0, y=_G._H-tabHeight, anchorX = 0, anchorY = 0}, {fc=_G.getGradientColor(_G.navBarColor, nil, 0.5)[1]})
+	local tabOver = _G.setAttr(display.newRect(contentGroup--[[, 'images/navigationMenu/tabBar.png']],0,0, _G._W, tabHeight + strokeWidth), {x=0, y=_G._H-tabHeight - strokeWidth, anchorX = 0, anchorY = 0}, {fc=_G.getGradientColor(_G.navBarColor, nil, 0.5)[1]})
 	_G.setAttr(display.newRect(contentGroup, 0, 0, _G._W, gradientHeight), {y=tabOver.y-gradientHeight, anchorX = 0, anchorY = 0}, {fc=0})
-	_G.setAttr(display.newRect(contentGroup, 0, 0, _G._W, strokeWidth), {y=_G._H-strokeWidth*0.5})
 
 	local function createTabs(_buttonList, _hard, _onComplete)
 		if #_buttonList > 0 then
 			local buttonWidth = math.floor(_W/#_buttonList/2)*2
 			for i, buttonData in ipairs(_buttonList) do
-				local button = _G.setAttr(display.newRect(contentGroup, 0, 0, buttonWidth, tabHeight), {strokeWidth = strokeWidth, x=buttonWidth*(i-1), y=_G._H-tabHeight, id=i, anchorX = 0, anchorY = 0}, {fc={0,0}})
-				button.overlay = _G.setAttr(display.newRect(contentGroup, 0, 0, button.width, button.height), {x=button.x, y=button.y+strokeWidth, alpha=0, strokeWidth=strokeWidth, anchorX = 0, anchorY = 0}, {fc=_G.navBarGradientOverlay})
+				local button = _G.setAttr(display.newRect(contentGroup, 0, 0, buttonWidth, tabHeight), {strokeWidth = strokeWidth, x=buttonWidth*(i-1), y=_G._H-tabHeight - strokeWidth, id=i, anchorX = 0, anchorY = 0}, {fc={0,0}})
+				button.overlay = _G.setAttr(display.newRect(contentGroup, 0, 0, button.width - strokeWidth * 2, button.height), {x=button.x, y=button.y+strokeWidth, alpha=0, strokeWidth=strokeWidth, anchorX = 0, anchorY = 0}, {fc=_G.navBarGradientOverlay})
 				button.text = _G.setAttr(display.newText(contentGroup, buttonData.title, 0, 0, _G.fontName, _G.fontSizeSmall), {x=button.x+button.width*0.5, y=math.round(button.y+button.height*0.5)}, {tc={0}})
 
 				button.handler = buttonData.callback
@@ -108,20 +107,21 @@ return function(parent, buttonDataList, fade)
 			end
 		end
 	end)
-	local previousSelected = 1
+	navGroup.previousSelected = 1
 	contentGroup:addEventListener('focusEnded', function(e)
 		local droppedOver = false
 		for i, button in ipairs(navGroup.buttons) do
 			if _G.tenfLib.pointInRect(e.x, e.y, button) then
 				droppedOver = true
-				previousSelected = i
 				local handler = button.handler
-				if handler then handler() end
+
+				if handler and navGroup.previousSelected ~= i then handler() end
+				navGroup.previousSelected = i
 				break
 			end
 		end
 		if not droppedOver then
-			navGroup:setSelected(previousSelected)
+			navGroup:setSelected(navGroup.previousSelected)
 		end
 	end)
 

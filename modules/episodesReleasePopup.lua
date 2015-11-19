@@ -137,11 +137,15 @@ return function(parent, data)
 				local pictureLetThrough = true
 				posterImage:addEventListener("touch", function(e)
 					if e.phase == "ended" then
+						coverBG:toFront()
+						posterImage:toFront()
 						if not zoomed then
 
 							_G.tenfLib.removeEventListeners(coverBG, "touch")
 
 							coverBG:addEventListener("touch", function(ee)
+								coverBG:toFront()
+								posterImage:toFront()
 								display.currentStage:setFocus(ee.target)
 								if ee.phase == "ended" then
 									local scale = e.target.orgScale

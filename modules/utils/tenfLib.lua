@@ -1283,6 +1283,7 @@ end
 
 
 -- Uppdaterad: innan 2012-07-16 av Marcus Thunström
+--[[
 function gotoCurrentScene(options)
 
 	local storyboard = require('storyboard')
@@ -1311,7 +1312,7 @@ function gotoCurrentScene(options)
 	storyboard.gotoScene(tmpSceneName)
 
 end
-
+--]]
 
 
 
@@ -2671,37 +2672,6 @@ function removeTableItem(t, obj)
 	local i = table.indexOf(t, obj)
 	return i and table.remove(t, i) or nil
 end
-
-
-
-
-
-
-
--- Lägger till en didExitScene event listener på en scen som tar bort scenen
---[[
-	Exempel:
-		function scene:exitScene()
-			require('modules.utils.tenfLib').sceneRemoveAfterExit(self)
-		end
-		scene:addEventListener("exitScene", scene)
-]]
--- Uppdaterad: 2012-09-25 14:35 av Marcus Thunström
-do
-
-	local storyboard = require('storyboard')
-
-	function sceneRemoveAfterExit(scene)
-		local sceneName = storyboard.getCurrentSceneName()
-		scene:addEventListener('didExitScene', function()
-			storyboard.removeScene(sceneName)
-		end)
-	end
-
-end
-
-
-
 
 
 -- round( _number [, _decimal = 0] )

@@ -32,16 +32,13 @@ application = {
 
 	},
 
-
-
-	notification = {
-		iphone = {
-			types = {
-				"alert"
-				-- "badge", "sound", "alert", "newsstand" -- (Note: if app should have push enabled this is crucial for device registration)
-			},
-		},
-	},
+	notification = 
+    {
+        iphone =
+        {
+            types = { "badge", "sound", "alert" }
+        }
+    }
 
 
 

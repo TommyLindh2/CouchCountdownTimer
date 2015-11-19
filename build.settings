@@ -24,7 +24,7 @@ settings = {
 				'Icon-Small.png',
 				'Icon-Small@2x.png',
 			},
-			UIApplicationExitsOnSuspend = true,
+			-- UIApplicationExitsOnSuspend = true,
 		},
 	},
 

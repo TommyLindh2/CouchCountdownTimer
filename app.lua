@@ -204,7 +204,7 @@ function _G.reloadMyData()
 end
 
 -- Moduler
-local storyboard         = require('storyboard')
+local composer = require( "composer" )
 
 --=======================================================================================
 --=======================================================================================
@@ -1449,7 +1449,7 @@ Runtime:addEventListener( "system", function( event )
 	end
 end )
 
-
+--[[
 -- Fixa storyboard-övergångar
 do
 	local h, _H = display.contentHeight, _G._H
@@ -1464,24 +1464,43 @@ do
 		if effect.to   and effect.to.yEnd     == -h then effect.to.yEnd     = -_H end
 	end
 end
-
+--]]
+local effectStart = "slide"
+local direction = ""
 _G.navMenu = require("modules.navigationBar")(
 	{
 		{title="Mina titlar", callback = function()
-			storyboard.gotoScene("scenes.myTitles")
+			direction = "Right"
+			composer.gotoScene("scenes.myTitles", {
+				effect = effectStart .. direction,
+			    time = 400
+			})
 		end},
 		{title="Lägg till titlar", callback = function()
-			storyboard.gotoScene("scenes.addTitles")
+			
+			if _G.navMenu.previousSelected == 1 then
+				direction = "Left"
+			else
+				direction = "Right"
+			end
+			composer.gotoScene("scenes.addTitles", {
+				effect = effectStart .. direction,
+			    time = 400
+			})
 		end},
 		{title="Inställningar", callback = function()
-			storyboard.gotoScene("scenes.settings")
+			direction = "Left"
+			composer.gotoScene("scenes.settings", {
+				effect = effectStart .. direction,
+			    time = 400
+			})
 		end},
 	}
 )
 
 local function goToStartScene()
 	_G.navMenu:setSelected(1)
-	storyboard.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
+	composer.gotoScene("scenes.myTitles", {params = {askForUpdate = true}})
 end
 
 if not _G.getSettings().username then
@@ -1494,24 +1513,19 @@ if not _G.getSettings().username then
 		goToStartScene()
 	end)
 else
-	goToStartScene()
-end
-
-
-
-
 --=======================================================================================
 
 -- Printa ut globaler (Debug)
 if _G.debugMode then
 	require('modules.utils.testHelper').startMonitorTable(_G, true) -- printa ut globaler
 end
+	goToStartScene()
+end
 
--- require('modules.utils.debugView')(display.currentStage)
 
 -- Listen for notifications
 local function onNotification( event )
-    native.showAlert("Kolla!", event.alert)
+    native.showAlert("Kolla!", event.alert, {"Ok"})
 end
 Runtime:addEventListener( "notification", onNotification )
 
@@ -1521,8 +1535,12 @@ if ( _G.launchArgs and _G.launchArgs.notification ) then
     onNotification( _G.launchArgs.notification )
 end
 
---[[
-_G.notifications.scheduleNotification( 5, {
-    alert = "Funkar det??"
-})
-]]
+-- [[
+
+timer.performWithDelay( 3000, function()
+	_G.notifications.scheduleNotification( 3, {
+	    alert = "Funkar det??"
+	})
+end, 1 )
+
+--]]
