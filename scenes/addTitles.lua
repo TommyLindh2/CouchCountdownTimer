@@ -136,7 +136,7 @@ function scene:hide( event )
 	local phase = event.phase
 
     if phase == "will" then
-		sceneName = composer.getCurrentSceneName()
+		sceneName = composer.getSceneName("current")
 		if searchField then
 			searchField:removeSelf()
 			searchField = nil

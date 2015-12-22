@@ -11,7 +11,7 @@
 --------------------------------
 
 _G.debugMode = true -- ska vara false för icke-interna versioner
-_G.version = "1.1"
+_G.version = "2.3"
 
 
 

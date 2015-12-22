@@ -885,7 +885,7 @@ do
 	end
 	
 	function _G.getDateString(dateTable)
-		return tostring(dateTable.day or "") .. " " .. tostring(getMonthName(dateTable.month) or "") .. " " .. tostring(dateTable.year or "")
+		return dateTable and (tostring(dateTable.day or "") .. " " .. tostring(getMonthName(dateTable.month) or "") .. " " .. tostring(dateTable.year or "")) or '????-??-??'
 	end
 
 	function _G.getDateFromImdbString(dateString)
@@ -1513,12 +1513,13 @@ if not _G.getSettings().username then
 		goToStartScene()
 	end)
 else
---=======================================================================================
+	--=======================================================================================
 
--- Printa ut globaler (Debug)
-if _G.debugMode then
-	require('modules.utils.testHelper').startMonitorTable(_G, true) -- printa ut globaler
-end
+	-- Printa ut globaler (Debug)
+	if _G.debugMode then
+		require('modules.utils.testHelper').startMonitorTable(_G, true) -- printa ut globaler
+		--require('modules.utils.testHelper').enableDisplayPrint()
+	end
 	goToStartScene()
 end
 
@@ -1529,13 +1530,15 @@ local function onNotification( event )
 end
 Runtime:addEventListener( "notification", onNotification )
 
+--_G.notifications.scheduleNotification( 3, {alert="Test!"} )
+
 -- The launch arguments provide a notification event if this app was started when the user tapped on a notification
 -- In this case, you must call the notification listener manually
 if ( _G.launchArgs and _G.launchArgs.notification ) then
     onNotification( _G.launchArgs.notification )
 end
 
--- [[
+--[[
 
 timer.performWithDelay( 3000, function()
 	_G.notifications.scheduleNotification( 3, {

@@ -1287,7 +1287,7 @@ end
 function gotoCurrentScene(options)
 
 	local storyboard = require('storyboard')
-	local curSceneName = storyboard.getCurrentSceneName()
+	local curSceneName = composer.getSceneName("current")
 
 	local overlay = display.captureScreen()
 

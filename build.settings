@@ -24,6 +24,27 @@ settings = {
 				'Icon-Small.png',
 				'Icon-Small@2x.png',
 			},
+			NSAppTransportSecurity =
+			{
+				NSExceptionDomains =
+				{
+					["imdb.com"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+					["ia.media-imdb.com"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+					["omdbapi.com"] =
+					{
+						NSIncludesSubdomains = true,
+						NSThirdPartyExceptionAllowsInsecureHTTPLoads = true
+					},
+				},
+			},
 			-- UIApplicationExitsOnSuspend = true,
 		},
 	},

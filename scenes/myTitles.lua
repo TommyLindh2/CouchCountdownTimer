@@ -102,7 +102,7 @@ function scene:create( event )
 		elseif ( event.phase == "ended" ) then
 			-- void
 		elseif ( event.phase == "ended" or event.phase == "submitted" ) then
-			-- void
+			native.setKeyboardFocus( nil )
 		elseif ( event.phase == "editing" ) then
 			local searchText = event.text
 			if #searchText == 0 then
@@ -251,7 +251,7 @@ function scene:create( event )
 			local searchSuccessful = searchFunction(data, _search)
 
 			if (_search and searchSuccessful) or (filterSuccessful and searchSuccessful) then
-				scrollView:append(data.Title .. " ( ".. data.Year .." )", data, viewData)
+				scrollView:append(data.Title .. " ( ".. (data.Year or '???') .." )", data, viewData)
 			end
 			
 		end
@@ -416,6 +416,10 @@ function scene:create( event )
 			end})
 		end
 
+		if _G.debugMode then
+			table.insert(buttons, {title = "DEBUG!", onClick = function(e) require('modules.utils.testHelper').enableDisplayPrint(); print("Debug mode enabled!") end})
+		end
+
 		local sideMenu = require("modules.sideMenu")(
 			{
 				parent = guiGroup,
@@ -449,7 +453,7 @@ function scene:hide( event )
 		local phase = event.phase
 
 		if phase == "will" then
-			sceneName = composer.getCurrentSceneName()
+			sceneName = composer.getSceneName("current")
 			if searchField then
 				searchField:removeSelf()
 				searchField = nil

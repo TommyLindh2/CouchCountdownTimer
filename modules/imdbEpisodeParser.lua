@@ -10,6 +10,11 @@ function getAmountOfSeasons(imdbID, _onComplete)
 		local xmlReader = require("modules.xmlParser")
 		if ( event.isError ) then
 			print( "Network error!")
+			print("--Title--")
+			for k,v in pairs(event) do
+				print(k,v)
+			end
+			print("--E-Title--")
 			errorOccured()
 		else
 			local resp = event.response
@@ -67,8 +72,13 @@ function getSeasonData(imdbID, seasonNr, _onComplete)
 	network.request( url, "GET", function( event )
 		local xmlReader = require("modules.xmlParser")
 		if ( event.isError ) then
-			errorOccured()
 			print( "Network error!")
+			print("--Season--")
+			for k,v in pairs(event) do
+				print(k,v)
+			end
+			print("--E-Season--")
+			errorOccured()
 		else
 			local resp = event.response
 			-- Specify as many/few of these as you like

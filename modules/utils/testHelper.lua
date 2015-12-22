@@ -190,7 +190,8 @@ do
 				display.newText(txtGroup, str, 0, 1, width, 0, native.systemFontBold, 10):setFillColor(255)
 			end
 			display.newText(txtGroup, str, 1, 1, width, 0, native.systemFontBold, 10):setFillColor(0)
-			messages.y = math.min(height-y, 0)
+			messages.y = math.min(height-y, 0) + 10
+			messages.x = messages.width / 2
 		end
 
 		timer.performWithDelay(1000, function() messages:toFront() end, 0)

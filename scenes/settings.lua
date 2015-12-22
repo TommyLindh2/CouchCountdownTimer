@@ -129,7 +129,7 @@ function scene:hide( event )
         local phase = event.phase
 
         if phase == "will" then
-            sceneName = composer.getCurrentSceneName()
+            sceneName = composer.getSceneName("current")
         elseif phase == "did" then
             timer.performWithDelay(0, function()
                 composer.removeScene(sceneName)

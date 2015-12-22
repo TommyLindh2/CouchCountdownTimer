@@ -21,8 +21,13 @@ function SearchOnImdb(searchString, searchType, _onComplete)
 	network.request( url, "GET", function( event )
 		local xmlReader = require("modules.xmlParser")
 		if ( event.isError ) then
-			errorOccured(url)
 			print( "Network error!")
+			print("--Search--")			
+			for k,v in pairs(event) do
+				print(k,v)
+			end
+			print("--E-Search--")			
+			errorOccured(url)
 		else
 			local resp = event.response
 			-- Specify as many/few of these as you like
@@ -83,7 +88,8 @@ function SearchOnImdb(searchString, searchType, _onComplete)
 
 			-- Ignore whitespace-only text nodes and strip leading/trailing whitespace from text
 			-- (does not strip leading/trailing whitespace from CDATA)
-			if pcall(function() parser:parse(resp, {stripWhitespace=true}) end) then
+			local status, errorMsg = pcall(function() parser:parse(resp, {stripWhitespace=true}) end)
+			if status then
 				for i, searchHit in ipairs(listOfSearchHits) do
 					for j,_ in ipairs(searchHit) do
 						searchHit.Title = searchHit.Title or ""
@@ -95,7 +101,7 @@ function SearchOnImdb(searchString, searchType, _onComplete)
 
 				_onComplete(listOfSearchHits)
 			else
-				errorOccured(url)
+				errorOccured(url, errorMsg)
 			end
 
 		end
@@ -110,8 +116,8 @@ return function(searchString, onComplete)
 		onComplete({isError = false, result = searchHits})
 	end)
 
-	function errorOccured(url)
-		onComplete({isError = true, messageToUser = "Något gick fel, vill du SMSa felet till Tommy? (Det skrivs automatiskt)", message = "fetching searchResults: " .. url})
+	function errorOccured(url, errormessage)
+		onComplete({isError = true, messageToUser = "Något gick fel, vill du SMSa felet till Tommy? (Det skrivs automatiskt)", message = "fetching searchResults: " .. url .. (errormessage and ("\n\nerror: " .. errormessage) or "")})
 	end
 end
 
